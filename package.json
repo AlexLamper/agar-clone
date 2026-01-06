@@ -1,0 +1,9 @@
+{
+  "name": "agar-clone",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ]
+}
