@@ -13,6 +13,7 @@ export enum MessageType {
 export interface JoinMessage {
     type: MessageType.JOIN;
     name: string;
+    color?: string;
 }
 
 export interface InputMessage {

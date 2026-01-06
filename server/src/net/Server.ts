@@ -14,7 +14,8 @@ export class GameServer {
     private wss: WebSocketServer;
     private world: World;
     private interval: NodeJS.Timeout | null = null;
-    private TICK_RATE = 20; // 20 updates per second (50ms)
+    private TICK_RATE = 40; // 40Hz for smoother gameplay
+    private tickCount = 0;
 
     constructor(port: number) {
         this.wss = new WebSocketServer({ port });
@@ -28,7 +29,7 @@ export class GameServer {
     start() {
         this.interval = setInterval(() => this.tick(), 1000 / this.TICK_RATE);
     }
-
+    
     private handleConnection(ws: WebSocket) {
         console.log('New connection');
         // Temp ID until join
@@ -51,11 +52,11 @@ export class GameServer {
     }
 
     private handleMessage(ws: WebSocket, playerId: string, msg: ClientMessage) {
-        console.log('Processing message:', msg.type);
+        // console.log('Processing message:', msg.type);
         switch (msg.type) {
             case MessageType.JOIN:
                 const player = new Player(playerId, msg.name, ws);
-                this.world.addPlayer(player);
+                this.world.addPlayer(player, msg.color);
                 
                 // Send Init
                 const initMsg: InitMessage = {
@@ -73,7 +74,7 @@ export class GameServer {
                 break;
 
             case MessageType.INPUT:
-                this.world.handleInput(playerId, msg.target);
+                this.world.handleInput(playerId, msg);
                 break;
         }
     }
@@ -81,25 +82,42 @@ export class GameServer {
     private tick() {
         this.world.tick();
         this.broadcastUpdate();
+        
+        this.tickCount++;
+        if (this.tickCount % 20 === 0) { // Every 0.5s
+             this.broadcastLeaderboard();
+        }
     }
 
     private broadcastUpdate() {
-        const updateMsg: UpdateMessage = {
-            type: MessageType.UPDATE,
-            entities: this.world.entities, // Optimization: Send only visible/changed later
-            removedEntityIds: [] // Diffs not implemented yet
-        };
+        // Send updates individually based on viewport
+        this.world.players.forEach(player => {
+            if (player.socket.readyState === WebSocket.OPEN) {
+                // Get visible entities
+                // Zoom factor: As player grows, view grows.
+                // Simple formula: viewScale = Math.pow(playerScale, 0.4)?
+                // For now fixed large viewport or based on score.
+                
+                let scale = 1;
+                if (player.score > 0) {
+                    scale = Math.max(1, Math.pow(player.score, 0.1));
+                }
+                const width = 1920 * scale;
+                const height = 1080 * scale;
 
-        const data = JSON.stringify(updateMsg);
-        
-        this.wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(data);
+                const visibleEntities = this.world.getVisibleEntities(player, width, height);
+                
+                const updateMsg: UpdateMessage = {
+                    type: MessageType.UPDATE,
+                    entities: visibleEntities, 
+                    removedEntityIds: [] 
+                };
+                player.socket.send(JSON.stringify(updateMsg));
             }
         });
+    }
 
-        // Periodic leaderboard? Or every tick?
-        // Let's do every tick for smoothness now
+    private broadcastLeaderboard() {
         const leaderboardMsg: LeaderboardMessage = {
             type: MessageType.LEADERBOARD,
             entries: Array.from(this.world.players.values())
@@ -115,4 +133,5 @@ export class GameServer {
             }
         });
     }
+
 }

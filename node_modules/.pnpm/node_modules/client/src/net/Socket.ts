@@ -25,21 +25,24 @@ export class Socket {
         };
     }
 
-    sendJoin(name: string) {
+    sendJoin(name: string, color?: string) {
         console.log('Sending join:', name);
         const msg: ClientMessage = {
             type: MessageType.JOIN,
-            name
+            name,
+            color
         };
         this.send(msg);
     }
 
-    sendInput(target: Vector2) {
+    sendInput(target: Vector2, split: boolean = false, eject: boolean = false) {
         if (this.ws.readyState !== WebSocket.OPEN) return;
         
         const msg: ClientMessage = {
             type: MessageType.INPUT,
-            target
+            target,
+            split,
+            eject
         };
         this.send(msg);
     }

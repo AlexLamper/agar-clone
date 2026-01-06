@@ -1,0 +1,24 @@
+TODO
+- Make score text white
+- Make border/arena bigger
+- Add split and 'w' pressing
+- Ability to test with multiple users. (maybe different clients?)
+- add virusses
+- make white lines on the map/arena a bit darker.
+- Make leaderboard actually update the score, clone from agar.io: Leaderboard in the top, bold letters, then numbers 1., 2., 3. trough 10.
+Next to each number the name of the player. For example: 3. TestUser
+- End/death screen
+- zoom ability (using scroll wheel)
+- update font (to make it as similar as possible to Agar.io,  a simple, rounded sans-serif, closely resembling fonts like Friends or similar geometric/friendly sans-serif styles)
+
+Later: 
+- different game modes
+- Coin system 
+- Skins/images for your player/blob
+- settings
+- other pages such as Privacy settings, cookie policy, privacy policy, terms of service, contact and support
+- Leaderboard
+- Shop
+- Daily quests
+- levels
+- boosts (such as mass boost or xp boost)

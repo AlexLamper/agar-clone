@@ -3,32 +3,174 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agar Clone</title>
-    <style>
-      body { margin: 0; overflow: hidden; background: #222; }
-      #gameCanvas { display: block; }
-      #loginOverlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center;
-        flex-direction: column; z-index: 10;
-      }
-      .login-box {
-        background: white; padding: 20px; border-radius: 5px; text-align: center;
-      }
-      input { padding: 10px; font-size: 16px; margin-bottom: 10px; display: block; }
-      button { padding: 10px 20px; font-size: 16px; background: #FF5555; color: white; border: none; cursor: pointer; }
-    </style>
+    <title>Agar.io</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="loginOverlay">
-        <div class="login-box">
-            <h1>Agar Clone</h1>
-            <input type="text" id="playerName" placeholder="Enter Name" maxlength="15" />
-            <button id="playBtn">Play</button>
+    
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- UI Overlay -->
+    <div id="ui-overlay">
+        
+        <!-- Top Right Links -->
+        <div class="top-links">
+            <a href="#">Privacy Settings</a> | 
+            <a href="#">Cookie Policy</a> | 
+            <a href="#">Privacy Policy</a> | 
+            <a href="#">Terms of Service</a> | 
+            <a href="#">Contact Support</a>
+        </div>
+
+        <div id="main-menu">
+            
+            <!-- Left Column: Profile & Shop -->
+            <div class="column left-col">
+                <div class="panel profile-panel">
+                    <div class="profile-header">
+                        <div class="avatar-box"></div>
+                        <div class="profile-info">
+                            <div class="player-name">Alex</div>
+                            <div class="resources">
+                                <div class="res-row coin">
+                                    <span class="icon">💰</span> 166 <span class="plus">+</span>
+                                </div>
+                                <div class="res-row dna">
+                                    <span class="icon">🧬</span> 7540 <span class="plus">+</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="level-badge">
+                            <span class="star">⭐</span>
+                            <span class="lvl">70</span>
+                        </div>
+                    </div>
+                    <div class="xp-bar-container">
+                        <div class="xp-bar" style="width: 20%"></div>
+                        <div class="xp-text">46099/248000 XP</div>
+                    </div>
+                </div>
+
+                <div class="panel offers-panel">
+                    <div class="panel-header">Offers</div>
+                    <div class="offer-cards">
+                        <div class="offer-card free-coins">
+                            <div class="card-icon">💰</div>
+                            <div class="card-text">Free Coins</div>
+                        </div>
+                        <div class="offer-card new-skins">
+                            <div class="card-icon">🐯</div>
+                            <div class="card-text">New Skins!</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel shop-panel">
+                    <div class="shop-tabs">
+                        <div class="tab active"><span class="icon">🛒</span> Shop</div>
+                        <div class="tab"><span class="icon">🏆</span> Leaderboards</div>
+                        <div class="tab"><span class="icon">🎁</span> Quests</div>
+                    </div>
+                    <div class="potions-row">
+                        <div class="potion">
+                            <div class="potion-img red">🧪</div>
+                            <div class="potion-name">Common Potion</div>
+                            <button class="btn-blue">Start</button>
+                        </div>
+                        <div class="potion">
+                            <div class="potion-img green">🧪</div>
+                            <div class="potion-name">Common Potion</div>
+                            <button class="btn-blue">Start</button>
+                        </div>
+                        <div class="potion">
+                            <div class="potion-img blue">🧪</div>
+                            <div class="potion-name">Common Potion</div>
+                            <button class="btn-blue">Start</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Column: Play -->
+            <div class="column center-col">
+                <div class="panel play-panel">
+                    <div class="game-logo">
+                        <h1>Agar.io</h1>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="skin-circle">
+                             <span class="plus">+</span>
+                        </div>
+                        <input type="text" id="playerName" placeholder="Nick" maxlength="15" value="Simba" />
+                    </div>
+                    
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <span style="margin-right: 10px; color: #666; font-weight: bold;">Color:</span>
+                        <input type="color" id="playerColor" value="#ff0000" style="border: none; width: 50px; height: 30px; cursor: pointer; padding: 0;" />
+                    </div>
+
+                    <button id="playBtn" class="btn-play">Play</button>
+
+                    <div class="controls-text">
+                      Move your mouse to control your cell<br>
+                      Press <b>Space</b> to split<br>
+                      Press <b>W</b> to eject some mass
+                  </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Modes -->
+            <div class="column right-col">
+                <div class="panel mode-panel">
+                    <div class="panel-header">Select Game Mode</div>
+                    <div class="mode-grid">
+                        <div class="mode-btn active red">
+                            <div class="mode-icon">🔴</div>
+                            <div class="mode-name">FFA</div>
+                        </div>
+                        <div class="mode-btn gray">
+                            <div class="mode-icon">⚔️</div>
+                            <div class="mode-name">Battle<br>Royale</div>
+                        </div>
+                        <div class="mode-btn gray">
+                            <div class="mode-icon">👥</div>
+                            <div class="mode-name">Teams</div>
+                        </div>
+                        <div class="mode-btn gray">
+                            <div class="mode-icon">🧪</div>
+                            <div class="mode-name">Experimental</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel party-panel">
+                    <div class="panel-header">👨‍👩‍👧‍👦 Party Mode</div>
+                    <div class="party-text">Play with your friends in the same arena</div>
+                    <div class="party-btns">
+                        <button class="btn-cyan">Create</button>
+                        <button class="btn-join">Join</button>
+                    </div>
+                </div>
+                
+                <div class="mobile-promo">
+                    <div class="promo-content">
+                        <b>AVAILABLE ON MOBILE!</b>
+                        <div class="store-badges">
+                            <div class="badge">App Store</div>
+                            <div class="badge">Google Play</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
-    <canvas id="gameCanvas"></canvas>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+
 

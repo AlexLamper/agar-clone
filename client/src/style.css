@@ -1,23 +1,439 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Reset & Global */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Nunito', 'Ubuntu', sans-serif;
+    user-select: none;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+#game-container {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #222;
 }
+
+canvas {
+    display: block;
+}
+
+/* UI Overlay */
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.4); /* Slight overlay on game background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Let clicks pass through if needed, but menu needs pointer events */
+}
+
+#ui-overlay > * {
+    pointer-events: auto;
+}
+
+.top-links {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 11px;
+    color: #888;
+}
+
+.top-links a {
+    color: #888;
+    text-decoration: none;
+    margin: 0 2px;
+}
+
+.top-links a:hover {
+    text-decoration: underline;
+}
+
+/* Main Menu Grid */
+#main-menu {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.left-col { width: 350px; }
+.center-col { width: 400px; align-items: center; }
+.right-col { width: 350px; }
+
+/* Panels Generic */
+.panel {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    overflow: hidden;
+    padding: 12px;
+}
+
+.panel-header {
+    font-weight: bold;
+    color: #444;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+/* Profile Panel */
+.profile-panel {
+    padding: 0;
+}
+
+.profile-header {
+    display: flex;
+    padding: 12px;
+    position: relative;
+    height: 80px;
+}
+
+.avatar-box {
+    width: 70px;
+    height: 70px;
+    background: #333;
+    border-radius: 4px;
+    margin-right: 15px;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.res-row {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    background: #eee;
+    border-radius: 3px;
+    padding: 4px 6px;
+    margin-bottom: 5px;
+    justify-content: space-between;
+    width: 140px;
+}
+
+.res-row .icon { margin-right: 4px; }
+.res-row .plus { 
+    background: #88CE02; 
+    color: white; 
+    border-radius: 2px; 
+    padding: 0 4px; 
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.level-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    text-align: center;
+}
+.star { color: #FFCE00; font-size: 24px; position: absolute; top: -5px; right: 0; z-index: 1; }
+.lvl { 
+    position: relative; z-index: 2; 
+    font-size: 10px; font-weight: bold; 
+    top: 5px; left: 8px; color: black;
+}
+
+.xp-bar-container {
+    background: #444;
+    height: 20px;
+    position: relative;
+    width: 100%;
+}
+.xp-bar {
+    background: #88CE02;
+    height: 100%;
+}
+.xp-text {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 11px;
+    line-height: 20px;
+    mix-blend-mode: difference;
+}
+
+/* Offers Panel */
+.offers-panel .offer-cards {
+    display: flex;
+    gap: 5px;
+}
+
+.offer-card {
+    flex: 1;
+    height: 60px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.offer-card.free-coins { background: linear-gradient(#FFCE00, #FFA500); }
+.offer-card.new-skins { background: linear-gradient(#777, #333); } /* Placeholder */
+.card-icon { font-size: 20px; margin-bottom: 2px; }
+
+/* Shop Panel */
+.shop-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 8px;
+}
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    cursor: pointer;
+    color: #888;
+}
+.tab.active {
+    color: #00B2E1;
+    border-bottom: 2px solid #00B2E1;
+}
+
+.potions-row {
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
+}
+.potion {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f5f5f5;
+    padding: 8px;
+    border-radius: 4px;
+}
+.potion-img { 
+    width: 40px; 
+    height: 50px; 
+    border-radius: 10px; 
+    margin-bottom: 5px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+.potion-img.red { background: #FFCECE; border: 1px solid #FF5555; }
+.potion-img.green { background: #CEFFCE; border: 1px solid #55FF55; }
+.potion-img.blue { background: #CECEFF; border: 1px solid #5555FF; }
+
+.potion-name { font-size: 11px; margin-bottom: 5px; color: #666; font-weight: bold; }
+
+.btn-blue {
+    background: #00B2E1;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-size: 13px;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Center Play Area */
+.play-panel {
+    background: #fff;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.game-logo h1 {
+    font-family: 'Nunito', 'Ubuntu', sans-serif;
+    font-size: 70px;
+    margin: 0 0 20px 0;
+    color: #444; 
+    line-height: 1;
+}
+
+.input-group {
+    background: white;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.skin-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    font-size: 20px;
+}
+
+#playerName {
+    border: none;
+    outline: none;
+    font-family: 'Nunito', 'Ubuntu', sans-serif;
+    font-size: 20px;
+    width: 100%;
+    color: #333;
+}
+
+.btn-play {
+    width: 100%;
+    background: #88CE02;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #6FAB02;
+    margin-bottom: 25px;
+    transition: transform 0.1s;
+}
+.btn-play:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #6FAB02;
+}
+
+.controls-text {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Right Panel Modes */
+.mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+.mode-btn {
+    background: #eee;
+    border-radius: 4px;
+    height: 85px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    color: #666;
+}
+
+.mode-btn.active.red {
+    background: #FF5555;
+    color: white;
+}
+
+.mode-icon { font-size: 28px; margin-bottom: 8px; }
+.mode-name { font-size: 13px; font-weight: bold; text-align: center; line-height: 1.2; }
+
+/* Party */
+.party-text {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.party-btns {
+    display: flex;
+    gap: 5px;
+}
+.btn-cyan {
+    background: #00B2E1;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    flex: 1;
+    padding: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #0090B5;
+}
+.btn-join {
+    background: #88CE02; /* Use green for join button like screenshot */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    flex: 1;
+    padding: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #6FAB02;
+}
+
+/* Mobile Promo */
+.mobile-promo {
+    background: linear-gradient(to right, #ffffff, #e0e0e0);
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    text-align: center;
+}
+.mobile-promo b {
+    display: block;
+    color: #00B2E1;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+.store-badges {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+.badge {
+    background: black;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
 a:hover {
   color: #535bf2;
 }

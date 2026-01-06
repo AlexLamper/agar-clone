@@ -24,13 +24,14 @@ export class Renderer {
         this.canvas.height = this.height;
     }
 
-    render(entities: BaseEntity[], me: Player | undefined, worldSize: number, leaderboard: {name: string, score: number}[]) {
+    render(entities: BaseEntity[], me: Player | undefined, worldSize: number, leaderboard: {name: string, score: number}[], zoom: number = 1.0) {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
         if (!me) {
             // Loading text or lobby
             this.ctx.fillStyle = 'black';
-            this.ctx.fillText('Connecting...', 20, 20);
+            this.ctx.font = '30px Nunito, sans-serif';
+            this.ctx.fillText('Connecting...', 20, 50);
             return;
         }
 
@@ -44,31 +45,31 @@ export class Renderer {
             camY = myCells.reduce((sum, c) => sum + c.position.y, 0) / myCells.length;
         } else {
              // Dead or spectator
-             // Just stay where we were or center
              camX = worldSize / 2;
              camY = worldSize / 2;
         }
 
         this.ctx.save();
         
-        // Translate to center camera
-        this.ctx.translate(this.width / 2 - camX, this.height / 2 - camY);
+        // Translate to center camera with zoom
+        this.ctx.translate(this.width / 2, this.height / 2);
+        this.ctx.scale(zoom, zoom);
+        this.ctx.translate(-camX, -camY);
 
         // Draw Grid
         this.drawGrid(worldSize);
 
         // Draw Entities
-        // Sort by radius/layer so food is below cells
-        entities.sort((a, b) => a.radius - b.radius); // Smaller first? Food is small.
-        // Actually food is small, cells are big. We want food bottom.
-        // But bigger cells cover smaller cells.
-        // So allow z-index implicity by radius is okay for food vs cell, but cell vs cell?
-        // Usually smallest radius on top? No, biggest on top implies eating? 
-        // No, smallest is on TOP to not be hidden? 
-        // In agar.io, if you overlap, the eater is on top? Or underneath?
-        // Let's sort simply by type first (Food, then Cells) then by Mass ascending so large cells cover small ones?
-        // No, small cells should be on top so you can see them being eaten?
-        // Let's sort by radius ascending.
+        // Sort by radius ascending so smaller cells (on top of larger?) or larger on top?
+        // Agar.io: Small cells are drawn ON TOP of larger cells so you can see them being eaten.
+        entities.sort((a, b) => a.radius - b.radius); // Smallest first (bottom) -> Largest last (top).
+        // Wait, if Largest is last, it covers collision.
+        // We want Smallest LAST so they bloom on top?
+        // Actually, in Agar.io, if I am big, I cover the small cell I eat.
+        // So small cells should be drawn FIRST (behind), Large cells LAST (front).
+        // BUT if I am a small cell, I want to see myself.
+        // Let's stick to sort by radius ascending (Small -> Large) means Large covers Small.
+        // That is physically correct for "eating".
         
         entities.forEach(entity => {
             this.drawEntity(entity);
@@ -82,7 +83,7 @@ export class Renderer {
     }
 
     private drawGrid(worldSize: number) {
-        this.ctx.strokeStyle = '#ddd';
+        this.ctx.strokeStyle = '#cccccc'; // Darker grid lines
         this.ctx.lineWidth = 1;
         this.ctx.beginPath();
         
@@ -93,7 +94,7 @@ export class Renderer {
         this.ctx.strokeStyle = '#333';
         this.ctx.strokeRect(0, 0, worldSize, worldSize);
         
-        this.ctx.strokeStyle = '#e5e5e5';
+        this.ctx.strokeStyle = '#bfbfbf'; // Inner grid more visible
         for (let x = 0; x <= worldSize; x += step) {
             this.ctx.moveTo(x, 0);
             this.ctx.lineTo(x, worldSize);
@@ -107,37 +108,96 @@ export class Renderer {
 
     private drawEntity(entity: BaseEntity) {
         this.ctx.beginPath();
+        
+        if (entity.type === EntityType.Virus) {
+             const spikes = 20;
+             const outerRadius = entity.radius;
+             const innerRadius = entity.radius * 0.9;
+             
+             for (let i = 0; i < spikes * 2; i++) {
+                 const r = (i % 2 === 0) ? outerRadius : innerRadius;
+                 const a = (Math.PI * 2 * i) / (spikes * 2);
+                 const x = entity.position.x + Math.cos(a) * r;
+                 const y = entity.position.y + Math.sin(a) * r;
+                 if (i === 0) this.ctx.moveTo(x, y);
+                 else this.ctx.lineTo(x, y);
+             }
+             this.ctx.closePath();
+             this.ctx.fillStyle = '#33FF33';
+             this.ctx.fill();
+             this.ctx.strokeStyle = '#22AA22';
+             this.ctx.lineWidth = 3;
+             this.ctx.stroke();
+             return;
+        }
+
         this.ctx.arc(entity.position.x, entity.position.y, entity.radius, 0, Math.PI * 2);
         this.ctx.fillStyle = entity.color;
         this.ctx.fill();
         
         if (entity.type === EntityType.Player) {
-             this.ctx.strokeStyle = '#333'; // Border
+             this.ctx.strokeStyle = '#333';
              this.ctx.lineWidth = 3;
              this.ctx.stroke();
-             
-             // Name? (Not in entity yet maybe)
-        } else {
-             // Food no border
+        } else if (entity.type === EntityType.Projectile) {
+             this.ctx.strokeStyle = '#333';
+             this.ctx.lineWidth = 2;
+             this.ctx.stroke();
         }
     }
 
     private drawLeaderboard(entries: {name: string, score: number}[]) {
+        const width = 250;
+        const height = 300;
+        const x = this.width - width - 20;
+        const y = 20;
+
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.fillRect(this.width - 220, 10, 200, 250);
+        this.ctx.fillRect(x, y, width, height);
         
         this.ctx.fillStyle = 'white';
-        this.ctx.font = '16px Arial';
-        this.ctx.fillText('Leaderboard', this.width - 200, 35);
+        this.ctx.font = 'bold 22px Nunito, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Leaderboard', x + width/2, y + 35);
+        
+        this.ctx.font = '18px Nunito, sans-serif';
+        this.ctx.textAlign = 'left';
         
         entries.forEach((entry, i) => {
-            this.ctx.fillText(`${i + 1}. ${entry.name || 'Unnamed'} - ${entry.score}`, this.width - 210, 60 + i * 20);
+            const rowY = y + 70 + i * 25;
+            this.ctx.fillText(`${i + 1}.`, x + 20, rowY);
+            
+            // Name ellipsis
+            let name = entry.name || 'Unnamed';
+            if (name.length > 15) name = name.substring(0, 15) + '...';
+            
+            this.ctx.fillText(name, x + 50, rowY);
+            
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText(entry.score.toString(), x + width - 20, rowY);
+            this.ctx.textAlign = 'left';
         });
+
+        // Reset text align
+        this.ctx.textAlign = 'left';
     }
 
     private drawScore(score: number) {
-        this.ctx.fillStyle = 'black';
-        this.ctx.font = '20px Arial';
-        this.ctx.fillText(`Score: ${score}`, 20, this.height - 20);
+        const text = `Score: ${score}`;
+        this.ctx.font = 'bold 24px Nunito, sans-serif';
+        const metrics = this.ctx.measureText(text);
+        const padding = 10;
+        const boxWidth = metrics.width + padding * 2;
+        const boxHeight = 40;
+        const x = 20;
+        const y = this.height - 20; // Bottom left anchor
+
+        // Background
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        this.ctx.fillRect(x, y - boxHeight + 10, boxWidth, boxHeight); // +10 adjustment for baseline
+        
+        // Text
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillText(text, x + padding, y);
     }
 }
