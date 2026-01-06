@@ -11,10 +11,37 @@ export class Player implements PlayerState {
     public cells: Cell[] = [];
     public socket: WebSocket;
 
+    // Progression
+    public xp: number = 0;
+    public level: number = 1;
+    public coins: number = 0;
+    public lastHourlyLine: number = 0;
+
     constructor(id: string, name: string, socket: WebSocket) {
         this.id = id;
         this.name = name;
         this.socket = socket;
+    }
+
+    addXp(amount: number) {
+        this.xp += amount;
+        this.checkLevelUp();
+    }
+
+    private checkLevelUp() {
+        // Simple formula: Required = Level * 1000
+        const required = this.level * 1000;
+        if (this.xp >= required) {
+            this.xp -= required;
+            this.level++;
+            // Reward: 100 coins per level
+            this.coins += 100;
+             this.checkLevelUp(); // Check again in case of massive XP gain
+        }
+    }
+
+    getNextLevelXp(): number {
+        return this.level * 1000;
     }
 
     addCell(cell: Cell) {
@@ -53,21 +80,17 @@ export class Player implements PlayerState {
             const dirX = dx / dist;
             const dirY = dy / dist;
 
-            // Place new cell slightly ahead
-            // Radius of new cell
-            const newRadius = Math.sqrt(newMass * 100 / Math.PI);
-            
-            // Should place it such that they don't instantly merge or are clearly separated?
-            // Usually starts at same center but has high velocity. I'll offset it by radius.
+            // Place new cell slightly ahead but close
+            // Velocity will carry it.
             const startPos = {
-                x: cell.position.x + dirX * (cell.radius + 5), 
-                y: cell.position.y + dirY * (cell.radius + 5)
+                x: cell.position.x + dirX * (cell.radius * 0.1), 
+                y: cell.position.y + dirY * (cell.radius * 0.1)
             };
 
             const newCell = new Cell(this.id, startPos, newMass, cell.color);
             newCell.target = target;
-            // Boost
-            newCell.velocity = { x: dirX * 20, y: dirY * 20 };
+            // Boost - slightly stronger
+            newCell.velocity = { x: dirX * 40, y: dirY * 40 };
             
             this.addCell(newCell);
             world.entities.push(newCell);

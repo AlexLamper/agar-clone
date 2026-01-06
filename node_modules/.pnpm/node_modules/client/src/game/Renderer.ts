@@ -1,6 +1,8 @@
 import { EntityType } from 'shared';
 import type { BaseEntity, Player } from 'shared';
 
+
+
 export class Renderer {
     private ctx: CanvasRenderingContext2D;
     private canvas: HTMLCanvasElement;
@@ -24,7 +26,7 @@ export class Renderer {
         this.canvas.height = this.height;
     }
 
-    render(entities: BaseEntity[], me: Player | undefined, worldSize: number, leaderboard: {name: string, score: number}[], zoom: number = 1.0) {
+    render(entities: BaseEntity[], players: Player[], me: Player | undefined, worldSize: number, leaderboard: {name: string, score: number}[], zoom: number = 1.0) {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
         if (!me) {
@@ -72,7 +74,7 @@ export class Renderer {
         // That is physically correct for "eating".
         
         entities.forEach(entity => {
-            this.drawEntity(entity);
+            this.drawEntity(entity, players);
         });
 
         this.ctx.restore();
@@ -106,7 +108,8 @@ export class Renderer {
         this.ctx.stroke();
     }
 
-    private drawEntity(entity: BaseEntity) {
+
+    private drawEntity(entity: BaseEntity, players: Player[]) {
         this.ctx.beginPath();
         
         if (entity.type === EntityType.Virus) {
@@ -136,11 +139,29 @@ export class Renderer {
         this.ctx.fill();
         
         if (entity.type === EntityType.Player) {
-             this.ctx.strokeStyle = '#333';
-             this.ctx.lineWidth = 3;
+             this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+             this.ctx.lineWidth = 4 + entity.radius * 0.05;
              this.ctx.stroke();
+
+             // Name
+             if ((entity as any).mass > 10) { // Don't draw name on tiny cells
+                 this.ctx.fillStyle = '#FFF';
+                 this.ctx.font = `bold ${Math.max(12, entity.radius * 0.4)}px Ubuntu`;
+                 this.ctx.textAlign = 'center';
+                 this.ctx.textBaseline = 'middle';
+                 this.ctx.lineWidth = 3;
+                 this.ctx.strokeStyle = '#000';
+                 
+                 // Find name
+                 let name = 'Unknown';
+                 const p = players.find(p => p.id === (entity as any).playerId);
+                 if (p) name = p.name;
+                 
+                 this.ctx.strokeText(name, entity.position.x, entity.position.y);
+                 this.ctx.fillText(name, entity.position.x, entity.position.y);
+             }
         } else if (entity.type === EntityType.Projectile) {
-             this.ctx.strokeStyle = '#333';
+             this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
              this.ctx.lineWidth = 2;
              this.ctx.stroke();
         }
@@ -148,15 +169,22 @@ export class Renderer {
 
     private drawLeaderboard(entries: {name: string, score: number}[]) {
         const width = 250;
-        const height = 300;
+        // Dynamic height based on entries, with min height and extra padding
+        const lineHeight = 30;
+        const headerHeight = 50; // Increased header space
+        const bottomPadding = 20; // Extra space at bottom
+        const contentHeight = Math.max(5, entries.length) * lineHeight;
+        const height = headerHeight + contentHeight + bottomPadding;
+        
         const x = this.width - width - 20;
         const y = 20;
 
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent background
+        // Radius for rounded corners could be nice, but fillRect is standard
         this.ctx.fillRect(x, y, width, height);
         
         this.ctx.fillStyle = 'white';
-        this.ctx.font = 'bold 22px Nunito, sans-serif';
+        this.ctx.font = 'bold 24px Nunito, sans-serif'; // Slightly bigger header
         this.ctx.textAlign = 'center';
         this.ctx.fillText('Leaderboard', x + width/2, y + 35);
         
@@ -164,7 +192,7 @@ export class Renderer {
         this.ctx.textAlign = 'left';
         
         entries.forEach((entry, i) => {
-            const rowY = y + 70 + i * 25;
+            const rowY = y + headerHeight + 10 + i * lineHeight; // +10 initial gap
             this.ctx.fillText(`${i + 1}.`, x + 20, rowY);
             
             // Name ellipsis

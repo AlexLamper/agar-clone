@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agar.io</title>
     <link rel="stylesheet" href="/src/style.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
   </head>
   <body>
     
@@ -13,16 +14,42 @@
         <canvas id="gameCanvas"></canvas>
     </div>
 
+    <!-- Coin Popup Overlay -->
+    <div id="popup-overlay" class="popup-overlay" style="display: none;">
+        <div class="coin-popup">
+            <div id="close-coin-popup" class="popup-close">×</div>
+            <div class="popup-header">Hourly Coins!</div>
+            <div class="popup-content">
+                <p>Welcome back, you have earned:</p>
+                <div class="reward-row">
+                    <img src="coin.svg" alt="Coin">
+                    <span>20</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Modal Overlay -->
+    <div id="generic-modal-overlay" class="popup-overlay" style="display: none;">
+        <div class="coin-popup"> <!-- Reusing popup style -->
+             <div id="close-generic-modal" class="popup-close">×</div>
+             <div class="popup-header" id="generic-modal-title">Title</div>
+             <div class="popup-content">
+                 <p>Feature coming soon!</p>
+             </div>
+        </div>
+    </div>
+
     <!-- UI Overlay -->
     <div id="ui-overlay">
         
         <!-- Top Right Links -->
         <div class="top-links">
-            <a href="#">Privacy Settings</a> | 
-            <a href="#">Cookie Policy</a> | 
-            <a href="#">Privacy Policy</a> | 
-            <a href="#">Terms of Service</a> | 
-            <a href="#">Contact Support</a>
+            <a href="/privacy.html">Privacy Settings</a> | 
+            <a href="/cookies.html">Cookie Policy</a> | 
+            <a href="/privacy.html">Privacy Policy</a> | 
+            <a href="/terms.html">Terms of Service</a> | 
+            <a href="/contact.html">Contact Support</a>
         </div>
 
         <div id="main-menu">
@@ -33,62 +60,70 @@
                     <div class="profile-header">
                         <div class="avatar-box"></div>
                         <div class="profile-info">
-                            <div class="player-name">Alex</div>
                             <div class="resources">
                                 <div class="res-row coin">
-                                    <span class="icon">💰</span> 166 <span class="plus">+</span>
+                                    <span class="icon">💰</span> <span id="menuCoins">0</span> <span class="plus">+</span>
                                 </div>
                                 <div class="res-row dna">
-                                    <span class="icon">🧬</span> 7540 <span class="plus">+</span>
+                                    <span class="icon">⭐</span> Lvl <span id="menuLevel">1</span>
+                                    <span style="font-size:10px; color:#aaa; margin-left:5px;">(<span id="menuXp">0</span> xp)</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="level-badge">
-                            <span class="star">⭐</span>
-                            <span class="lvl">70</span>
-                        </div>
                     </div>
+                    <div class="player-name" id="menuPlayerName">Guest</div>
                     <div class="xp-bar-container">
-                        <div class="xp-bar" style="width: 20%"></div>
-                        <div class="xp-text">46099/248000 XP</div>
+                        <div class="xp-bar" id="menuXpBar" style="width: 0%"></div>
+                        <div class="xp-text" id="menuXpText">0/1000 XP</div>
                     </div>
                 </div>
 
                 <div class="panel offers-panel">
                     <div class="panel-header">Offers</div>
-                    <div class="offer-cards">
-                        <div class="offer-card free-coins">
-                            <div class="card-icon">💰</div>
-                            <div class="card-text">Free Coins</div>
+                    <div class="offer-cards" style="display: flex; gap: 10px; padding: 5px 0; margin-top: 10px; justify-content: center;">
+                        <div class="offer-card free-coins" id="freeCoinsBtn">
+                            <img src="/icons/coins.svg" alt="Coins" class="offer-card-icon" />
+                            <div class="card-text" id="freeCoinsText">Free Coins</div>
                         </div>
                         <div class="offer-card new-skins">
-                            <div class="card-icon">🐯</div>
-                            <div class="card-text">New Skins!</div>
+                            <div class="offer-card-icon">📦</div>
+                            <div class="card-text">New skins!</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="panel shop-panel">
-                    <div class="shop-tabs">
-                        <div class="tab active"><span class="icon">🛒</span> Shop</div>
-                        <div class="tab"><span class="icon">🏆</span> Leaderboards</div>
-                        <div class="tab"><span class="icon">🎁</span> Quests</div>
+                    <div class="shop-buttons-row">
+                        <button class="menu-btn" id="btn-shop">
+                            <img src="/icons/shop.svg" alt="Shop" class="menu-btn-icon" />
+                            <span class="menu-btn-text">Shop</span>
+                        </button>
+                        <button class="menu-btn" id="btn-leaderboard">
+                            <img src="/icons/leaderboards.svg" alt="Leaderboards" class="menu-btn-icon" />
+                            <span class="menu-btn-text">Leaderboards</span>
+                        </button>
+                        <button class="menu-btn" id="btn-quests">
+                            <img src="/icons/chest.svg" alt="Quests" class="menu-btn-icon" />
+                            <span class="menu-btn-text">Quests</span>
+                        </button>
                     </div>
+                    
+                    <!-- Potions Section (Restored) -->
                     <div class="potions-row">
                         <div class="potion">
                             <div class="potion-img red">🧪</div>
-                            <div class="potion-name">Common Potion</div>
-                            <button class="btn-blue">Start</button>
+                            <div class="potion-name">Mass Boost</div>
+                            <button class="btn-blue">Buy</button>
                         </div>
                         <div class="potion">
                             <div class="potion-img green">🧪</div>
-                            <div class="potion-name">Common Potion</div>
-                            <button class="btn-blue">Start</button>
+                            <div class="potion-name">XP Boost</div>
+                            <button class="btn-blue">Buy</button>
                         </div>
                         <div class="potion">
                             <div class="potion-img blue">🧪</div>
-                            <div class="potion-name">Common Potion</div>
-                            <button class="btn-blue">Start</button>
+                            <div class="potion-name">Coin Boost</div>
+                            <button class="btn-blue">Buy</button>
                         </div>
                     </div>
                 </div>
@@ -97,21 +132,23 @@
             <!-- Center Column: Play -->
             <div class="column center-col">
                 <div class="panel play-panel">
-                    <div class="game-logo">
+                    <button id="settings-btn" class="settings-btn" type="button">
+                        <img src="/icons/settings.svg" alt="Settings" />
+                    </button>
+                    <div class="game-logo" style="margin-top: 40px;">
                         <h1>Agar.io</h1>
                     </div>
 
-                    <div class="input-group">
-                        <div class="skin-circle">
-                             <span class="plus">+</span>
+                    <div class="input-group play-inputs">
+                        <div class="skin-circle" id="skinSelector">
+                             <div class="skin-preview" id="skinPreview" style="background-color: #ff0000;"></div>
+                             <span class="plus-icon">+</span>
+                             <input type="color" id="playerColor" value="#ff0000" class="hidden-color-input" />
                         </div>
                         <input type="text" id="playerName" placeholder="Nick" maxlength="15" value="Simba" />
                     </div>
                     
-                    <div class="input-group" style="margin-bottom: 25px;">
-                        <span style="margin-right: 10px; color: #666; font-weight: bold;">Color:</span>
-                        <input type="color" id="playerColor" value="#ff0000" style="border: none; width: 50px; height: 30px; cursor: pointer; padding: 0;" />
-                    </div>
+                    <!-- Old Color Picker Removed -->
 
                     <button id="playBtn" class="btn-play">Play</button>
 
@@ -126,29 +163,28 @@
             <!-- Right Column: Modes -->
             <div class="column right-col">
                 <div class="panel mode-panel">
-                    <div class="panel-header">Select Game Mode</div>
+                    <div class="panel-header mode-header">Select Game Mode</div>
                     <div class="mode-grid">
                         <div class="mode-btn active red">
-                            <div class="mode-icon">🔴</div>
                             <div class="mode-name">FFA</div>
                         </div>
                         <div class="mode-btn gray">
-                            <div class="mode-icon">⚔️</div>
                             <div class="mode-name">Battle<br>Royale</div>
                         </div>
                         <div class="mode-btn gray">
-                            <div class="mode-icon">👥</div>
                             <div class="mode-name">Teams</div>
                         </div>
                         <div class="mode-btn gray">
-                            <div class="mode-icon">🧪</div>
                             <div class="mode-name">Experimental</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="panel party-panel">
-                    <div class="panel-header">👨‍👩‍👧‍👦 Party Mode</div>
+                    <div class="panel-header party-header">
+                        <img src="/icons/party-mode.svg" alt="Party" style="height: 35px; width: 35px; margin-right: 2px;">
+                        <span class="party-title">Party Mode</span>
+                    </div>
                     <div class="party-text">Play with your friends in the same arena</div>
                     <div class="party-btns">
                         <button class="btn-cyan">Create</button>

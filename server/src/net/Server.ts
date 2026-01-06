@@ -7,7 +7,9 @@ import {
     ClientMessage, 
     InitMessage, 
     UpdateMessage, 
-    LeaderboardMessage 
+    LeaderboardMessage,
+    StatsMessage,
+    ClaimHourlyMessage
 } from 'shared';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,7 +28,7 @@ export class GameServer {
         this.wss.on('connection', (ws) => this.handleConnection(ws));
         
         // Add Bots
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 10; i++) {
              const bot = new Bot(uuidv4(), `Bot ${i+1}`, this.world);
              this.bots.push(bot);
              this.world.addPlayer(bot);
@@ -60,7 +62,7 @@ export class GameServer {
         });
     }
 
-    private handleMessage(ws: WebSocket, playerId: string, msg: ClientMessage) {
+    private handleMessage(ws: WebSocket, playerId: string, msg: ClientMessage | ClaimHourlyMessage) {
         // console.log('Processing message:', msg.type);
         switch (msg.type) {
             case MessageType.JOIN:
@@ -77,9 +79,26 @@ export class GameServer {
                         id: p.id,
                         name: p.name,
                         score: p.score
-                    }))
+                    })),
+                    coins: player.coins,
+                    xp: player.xp,
+                    level: player.level,
+                    nextLevelXp: player.getNextLevelXp()
                 };
                 ws.send(JSON.stringify(initMsg));
+                break;
+
+            case MessageType.CLAIM_HOURLY:
+                const p = this.world.players.get(playerId);
+                if (p) {
+                    const now = Date.now();
+                    // Allow if never claimed (0) or > 1 hour ago
+                    if (p.lastHourlyLine === 0 || now - p.lastHourlyLine >= 3600000) {
+                        p.coins += 20;
+                        p.lastHourlyLine = now;
+                        // Stats will update next tick or we can force one
+                    }
+                }
                 break;
 
             case MessageType.INPUT:
@@ -99,6 +118,31 @@ export class GameServer {
         if (this.tickCount % 20 === 0) { // Every 0.5s
              this.broadcastLeaderboard();
         }
+        if (this.tickCount % 40 === 0) { // Every 1s
+            this.broadcastStats();
+        }
+    }
+
+    private broadcastStats() {
+        this.world.players.forEach(player => {
+            if (player instanceof Bot) return;
+            if (player.socket.readyState === WebSocket.OPEN) {
+                const now = Date.now();
+                const timeLeft = Math.max(0, 3600000 - (now - player.lastHourlyLine));
+                const available = player.lastHourlyLine === 0 || timeLeft === 0;
+
+                const msg: StatsMessage = {
+                    type: MessageType.STATS,
+                    coins: player.coins,
+                    level: player.level,
+                    xp: player.xp,
+                    nextLevelXp: player.getNextLevelXp(),
+                    hourlyAvailable: available,
+                    hourlyTimeLeft: available ? 0 : timeLeft
+                };
+                player.socket.send(JSON.stringify(msg));
+            }
+        });
     }
 
     private broadcastUpdate() {

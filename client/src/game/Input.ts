@@ -2,15 +2,13 @@ import type { Vector2 } from 'shared';
 
 export class Input {
     public mouse: Vector2 = { x: 0, y: 0 };
-    private canvas: HTMLCanvasElement;
     private cameraPos: Vector2 = { x: 0, y: 0 };
 
     public split: boolean = false;
     public eject: boolean = false;
-    public zoom: number = 1.0;
+    public zoom: number = 1.2; // Zoom a bit more in by default
 
     constructor(canvas: HTMLCanvasElement) {
-        this.canvas = canvas;
         window.addEventListener('mousemove', (e) => this.onMouseMove(e));
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
         window.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
@@ -34,7 +32,7 @@ export class Input {
         e.preventDefault();
         const zoomSpeed = 0.001;
         this.zoom -= e.deltaY * zoomSpeed;
-        this.zoom = Math.max(0.1, Math.min(2.0, this.zoom));
+        this.zoom = Math.max(0.5, Math.min(2.0, this.zoom)); // Max zoom out clamped
     }
 
     // Returns world coordinates target based on mouse position

@@ -1,4 +1,4 @@
-import { BaseEntity, Player, Vector2 } from "./types.js";
+import type { BaseEntity, Player, Vector2 } from "./types.js";
 
 export enum MessageType {
     JOIN = 'join',
@@ -6,7 +6,9 @@ export enum MessageType {
     INIT = 'init',
     UPDATE = 'update',
     LEADERBOARD = 'leaderboard',
-    GAME_OVER = 'game_over'
+    GAME_OVER = 'game_over',
+    STATS = 'stats',
+    CLAIM_HOURLY = 'claim_hourly'
 }
 
 // Client -> Server
@@ -14,6 +16,10 @@ export interface JoinMessage {
     type: MessageType.JOIN;
     name: string;
     color?: string;
+}
+
+export interface ClaimHourlyMessage {
+    type: MessageType.CLAIM_HOURLY;
 }
 
 export interface InputMessage {
@@ -30,6 +36,20 @@ export interface InitMessage {
     playerId: string;
     entities: BaseEntity[];
     players: Player[];
+    coins: number;
+    level: number;
+    xp: number;
+    nextLevelXp: number;
+}
+
+export interface StatsMessage {
+    type: MessageType.STATS;
+    coins: number;
+    level: number;
+    xp: number;
+    nextLevelXp: number;
+    hourlyAvailable: boolean; // Tell client if they can claim
+    hourlyTimeLeft?: number; // ms left if not available
 }
 
 export interface UpdateMessage {

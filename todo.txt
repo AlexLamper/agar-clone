@@ -1,14 +1,8 @@
-TODO
-- Ability to test with multiple users. (maybe different clients?)
-- End/death screen
-- update font (to make it as similar as possible to Agar.io,  a simple, rounded sans-serif, closely resembling fonts like Friends or similar geometric/friendly sans-serif styles)
-
 Later: 
 - different game modes
 - Coin system 
-- Skins/images for your player/blob
+- Skins for your player/blob
 - settings
-- add pages such as Privacy settings, cookie policy, privacy policy, terms of service, contact and support (with actual information and data)
 - Leaderboard
 - Shop
 - Daily quests

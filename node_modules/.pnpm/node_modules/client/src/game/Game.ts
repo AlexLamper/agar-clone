@@ -53,10 +53,71 @@ export class Game {
             const savedName = localStorage.getItem('agar_playerName');
             if (savedName) input.value = savedName;
         }
-        if (colorInput) {
+
+        // Color Picker Logic
+        const skinPreview = document.getElementById('skinPreview');
+        const playerColorInput = document.getElementById('playerColor') as HTMLInputElement;
+        
+        if (playerColorInput && skinPreview) {
             const savedColor = localStorage.getItem('agar_playerColor');
-            if (savedColor) colorInput.value = savedColor;
+            if (savedColor) {
+                 playerColorInput.value = savedColor;
+                 skinPreview.style.backgroundColor = savedColor;
+            }
+
+            playerColorInput.addEventListener('input', (e) => {
+                const val = (e.target as HTMLInputElement).value;
+                skinPreview.style.backgroundColor = val;
+            });
         }
+
+        // Free Coins Logic
+        const freeCoinsBtn = document.getElementById('freeCoinsBtn');
+        const coinPopup = document.getElementById('popup-overlay'); // Hourly coin popup
+        const closeCoinPopup = document.getElementById('close-coin-popup');
+        const claimBtnVisual = document.getElementById('claim-btn-visual');
+
+        freeCoinsBtn?.addEventListener('click', () => {
+             if (freeCoinsBtn.style.pointerEvents === 'none') {
+                 console.log("Button disabled");
+                 return;
+             }
+             this.socket.sendClaimHourly();
+             // Open feedback popup immediately (optimistic)
+             if (coinPopup) coinPopup.style.display = 'flex';
+        });
+
+        const closeCoinFn = () => {
+            if (coinPopup) coinPopup.style.display = 'none';
+        };
+
+        closeCoinPopup?.addEventListener('click', closeCoinFn);
+        claimBtnVisual?.addEventListener('click', closeCoinFn);
+
+        // Menu Buttons Logic
+        const genericModal = document.getElementById('generic-modal-overlay');
+        const genericTitle = document.getElementById('generic-modal-title');
+        const closeGeneric = document.getElementById('close-generic-modal');
+
+        const openGenericModal = (title: string) => {
+            if (genericTitle) genericTitle.innerText = title;
+            if (genericModal) genericModal.style.display = 'flex';
+        };
+
+        document.getElementById('btn-shop')?.addEventListener('click', () => openGenericModal('Shop'));
+        document.getElementById('btn-leaderboard')?.addEventListener('click', () => openGenericModal('Leaderboards'));
+        document.getElementById('btn-quests')?.addEventListener('click', () => openGenericModal('Quests'));
+
+        // Settings Button Modal Logic
+        const settingsBtn = document.getElementById('settings-btn');
+        settingsBtn?.addEventListener('click', () => {
+            if (genericTitle) genericTitle.innerText = 'Settings';
+            if (genericModal) genericModal.style.display = 'flex';
+        });
+
+        closeGeneric?.addEventListener('click', () => {
+            if (genericModal) genericModal.style.display = 'none';
+        });
 
         const restartBtn = document.getElementById('restartBtn');
         restartBtn?.addEventListener('click', () => {
@@ -152,7 +213,7 @@ export class Game {
             position: e.renderPos // Override position with interpolated one
         }));
 
-        this.renderer.render(renderList, this.me, this.worldSize, this.leaderboard, this.input.zoom);
+        this.renderer.render(renderList, this.players, this.me, this.worldSize, this.leaderboard, this.input.zoom);
         
         // Update input camera
         if (this.me) {
@@ -192,7 +253,7 @@ export class Game {
         });
     }
 
-    private handleMessage(msg: ServerMessage) {
+    private handleMessage(msg: ServerMessage | any) {
         // console.log('Received message:', msg.type); // Too spammy for update
         switch (msg.type) {
             case MessageType.INIT:
@@ -200,6 +261,15 @@ export class Game {
                 this.syncEntities(msg.entities);
                 this.players = msg.players;
                 this.me = this.players.find(p => p.id === msg.playerId);
+                // Initial Stats
+                this.handleStats({
+                    coins: (msg as any).coins || 0,
+                    level: (msg as any).level || 1,
+                    xp: (msg as any).xp || 0,
+                    nextLevelXp: (msg as any).nextLevelXp || 1000,
+                    hourlyAvailable: true, 
+                    hourlyTimeLeft: 0
+                });
                 break;
             case MessageType.UPDATE:
                 this.syncEntities(msg.entities);
@@ -216,7 +286,50 @@ export class Game {
             case MessageType.GAME_OVER:
                 this.showGameOver();
                 break;
+            case MessageType.STATS:
+                this.handleStats(msg as any);
+                break;
         }
+    }
+
+    private handleStats(msg: any) { // StatsMessage
+         const menuCoins = document.getElementById('menuCoins');
+         const menuLevel = document.getElementById('menuLevel');
+         const menuXp = document.getElementById('menuXp');
+         
+         const menuXpBar = document.getElementById('menuXpBar');
+         const menuXpText = document.getElementById('menuXpText');
+
+         const freeCoinsText = document.getElementById('freeCoinsText');
+         const freeCoinsBtn = document.getElementById('freeCoinsBtn');
+
+         if (menuCoins) menuCoins.innerText = msg.coins != null ? msg.coins.toString() : '0';
+         if (menuLevel) menuLevel.innerText = msg.level != null ? msg.level.toString() : '1';
+         if (menuXp) menuXp.innerText = msg.xp != null ? msg.xp.toString() : '0';
+
+         if (menuXpBar && menuXpText) {
+             const xp = msg.xp || 0;
+             const nextXp = msg.nextLevelXp || 1000;
+             const pct = Math.min(100, Math.max(0, (xp / nextXp) * 100));
+             menuXpBar.style.width = `${pct}%`;
+             menuXpText.innerText = `${xp}/${nextXp} XP`;
+         }
+
+         if (freeCoinsText && freeCoinsBtn) {
+             if (msg.hourlyAvailable) {
+                 freeCoinsText.innerText = "Free Coins";
+                 freeCoinsBtn.style.opacity = '1';
+                 freeCoinsBtn.style.pointerEvents = 'auto';
+                 freeCoinsBtn.style.cursor = 'pointer';
+             } else {
+                 const m = Math.floor(msg.hourlyTimeLeft / 60000);
+                 const s = Math.floor((msg.hourlyTimeLeft % 60000) / 1000);
+                 freeCoinsText.innerText = `Collect: ${m}m ${s}s`;
+                 freeCoinsBtn.style.opacity = '0.5';
+                 freeCoinsBtn.style.pointerEvents = 'none';
+                 freeCoinsBtn.style.cursor = 'default';
+             }
+         }
     }
 
     private syncEntities(serverEntities: BaseEntity[]) {
@@ -228,11 +341,26 @@ export class Game {
             if (current) {
                 // Update target
                 current.targetPos = sEntity.position;
-                current.radius = sEntity.radius;
+                // current.radius = sEntity.radius; // Don't snap radius
+                
+                // Animate radius
+                const dr = sEntity.radius - current.radius;
+                if (Math.abs(dr) > 0.5) {
+                    current.radius += dr * 0.2; // Smooth radius growth/shrink
+                } else {
+                    current.radius = sEntity.radius;
+                }
+
                 current.mass = (sEntity as any).mass; // Hacky cast
                 current.color = sEntity.color;
+                if ((sEntity as any).skin) (current as any).skin = (sEntity as any).skin;
             } else {
                 // Add new
+                // If this is a split cell, it might be better to spawn it at the parent's location?
+                // But we don't know the parent. 
+                // However, splitting usually happens with high velocity.
+                // If we get a new entity with high velocity (not sent here), it moves fast.
+                
                 this.clientEntities.set(sEntity.id, {
                     ...sEntity,
                     renderPos: { ...sEntity.position },

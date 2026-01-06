@@ -42,20 +42,24 @@ canvas {
 
 .top-links {
     position: absolute;
-    top: 5px;
-    right: 10px;
-    font-size: 11px;
-    color: #888;
+    top: 0;
+    right: 0;
+    font-size: 13px;
+    color: #646464;
+    background-color: #fff;
+    padding: 8px 15px;
+    border-bottom-left-radius: 15px;
 }
 
 .top-links a {
-    color: #888;
-    text-decoration: none;
+    color: #646464;
+    text-decoration: underline;
     margin: 0 2px;
 }
 
 .top-links a:hover {
     text-decoration: underline;
+    color: #646464;
 }
 
 /* Main Menu Grid */
@@ -78,7 +82,7 @@ canvas {
 /* Panels Generic */
 .panel {
     background: #fff;
-    border-radius: 4px;
+    border-radius: 16px; /* More rounded corners */
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     overflow: hidden;
     padding: 12px;
@@ -198,69 +202,117 @@ canvas {
     cursor: pointer;
 }
 
-.offer-card.free-coins { background: linear-gradient(#FFCE00, #FFA500); }
-.offer-card.new-skins { background: linear-gradient(#777, #333); } /* Placeholder */
-.card-icon { font-size: 20px; margin-bottom: 2px; }
-
-/* Shop Panel */
-.shop-tabs {
-    display: flex;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 8px;
-}
-.tab {
-    flex: 1;
-    text-align: center;
-    padding: 10px 0;
-    font-size: 14px;
-    cursor: pointer;
-    color: #888;
-}
-.tab.active {
-    color: #00B2E1;
-    border-bottom: 2px solid #00B2E1;
+.panel-header {
+    font-weight: bold;
 }
 
-.potions-row {
+.offer-card.free-coins,
+.offer-card.new-skins {
     display: flex;
-    gap: 5px;
-    justify-content: space-between;
-}
-.potion {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    background: #f5f5f5;
-    padding: 8px;
+    justify-content: flex-start;
+    padding: 0 12px;
     border-radius: 4px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 0;
+    min-height: 0;
+    height: 48px;
 }
-.potion-img { 
-    width: 40px; 
-    height: 50px; 
-    border-radius: 10px; 
-    margin-bottom: 5px; 
+
+.offer-card.free-coins {
+    background: #54c900;
+}
+
+.offer-card.new-skins {
+    background: linear-gradient(#b163ff, #8235cf);
+}
+
+.offer-card.free-coins .card-text,
+.offer-card.new-skins .card-text {
+    color: #fff;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    margin: 0 0 0 10px;
+    padding: 0;
+    display: block;
+    white-space: nowrap;
+}
+
+.offer-card.new-skins .offer-card-icon {
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
 }
-.potion-img.red { background: #FFCECE; border: 1px solid #FF5555; }
-.potion-img.green { background: #CEFFCE; border: 1px solid #55FF55; }
-.potion-img.blue { background: #CECEFF; border: 1px solid #5555FF; }
 
-.potion-name { font-size: 11px; margin-bottom: 5px; color: #666; font-weight: bold; }
+.offer-card-icon {
+    width: 36px;
+    height: 36px;
+    display: block;
+    flex-shrink: 0;
+}
+.card-text {
+    font-size: 15px;
+    font-weight: bold;
+    color: #fff;
+    text-align: left;
+}
 
-.btn-blue {
-    background: #00B2E1;
+/* Shop Panel Buttons */
+.shop-buttons-row {
+    display: flex;
+    flex-direction: row; /* Horizontal */
+    gap: 10px;
+    padding: 0 0 12px 0;
+    justify-content: space-between;
+}
+
+.menu-btn {
+    background-color: #00d3ff;
     color: white;
     border: none;
-    border-radius: 3px;
-    padding: 6px 10px;
+    border-radius: 8px;
+    padding: 6px 2px;
     font-size: 13px;
-    width: 100%;
+    font-weight: bold;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    transition: transform 0.1s, filter 0.1s;
+    font-family: 'Nunito', 'Ubuntu', sans-serif;
+    line-height: 1.2;
+    gap: 6px;
 }
+
+.menu-btn:hover {
+    background-color: #07aaca;
+}
+
+.menu-btn-icon {
+    width: 38px;
+    height: 38px;
+    display: block;
+    margin-bottom: 0;
+}
+
+.menu-btn-text {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 0;
+}
+
+/* Center icon/text nicely */
+
+/* Potions / Shop Content */
 
 /* Center Play Area */
 .play-panel {
@@ -272,66 +324,144 @@ canvas {
     flex-direction: column;
     align-items: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    position: relative; /* For settings icon */
+}
+
+/* Settings Icon */
+.settings-icon {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 20px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.settings-icon:hover {
+    color: #444;
+}
+
+.settings-btn {
+    background: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-btn img {
+    width: 28px;
+    height: 28px;
+    display: block;
 }
 
 .game-logo h1 {
-    font-family: 'Nunito', 'Ubuntu', sans-serif;
+    font-family: sans-serif, 'Ubuntu';
     font-size: 70px;
     margin: 0 0 20px 0;
-    color: #444; 
+    color: #353535; 
     line-height: 1;
+    font-weight: 600; /* Bolder */
+    letter-spacing: -3px; /* Closer together */
 }
 
 .input-group {
     background: white;
-    padding: 6px;
+    padding: 0; /* Handled by flex children */
     border-radius: 4px;
     display: flex;
     align-items: center;
     width: 100%;
-    border: 1px solid #ccc;
+    border: none; /* Removed border from group container */
     margin-bottom: 15px;
     box-sizing: border-box;
 }
 
+/* Play Inputs Container */
+.play-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Skin Selector Circle */
 .skin-circle {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #eee;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #aaa;
-    margin-right: 10px;
+    position: relative;
     cursor: pointer;
-    border: 1px solid #ddd;
+    flex-shrink: 0;
+    border: 2px solid #ddd;
+    overflow: hidden;
+}
+.skin-preview {
+    width: 100%;
+    height: 100%;
+}
+.skin-circle:hover {
+    border-color: #ccc;
+}
+.skin-circle .plus-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 20px;
+    color: white; /* Contrast against color */
+    pointer-events: none;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5); /* Visibility on light colors */
+}
+.hidden-color-input {
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
 }
 
 #playerName {
-    border: none;
+    border: 2px solid #a1a1a1;
     outline: none;
     font-family: 'Nunito', 'Ubuntu', sans-serif;
     font-size: 20px;
-    width: 100%;
-    color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    flex-grow: 1;
 }
 
 .btn-play {
     width: 100%;
-    background: #88CE02;
+    background: #54c900;
     color: white;
     border: none;
-    padding: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 0px;
+    padding-bottom: 0px;
     font-size: 24px;
     font-weight: bold;
     border-radius: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 0 #6FAB02;
     margin-bottom: 25px;
     transition: transform 0.1s;
+    max-width: 300px;
+    height: 40px;
 }
+
+.btn-play:hover {
+    background: #6fab02;
+}
+
 .btn-play:active {
     transform: translateY(4px);
     box-shadow: 0 0 0 #6FAB02;
@@ -344,94 +474,339 @@ canvas {
     line-height: 1.6;
 }
 
-/* Right Panel Modes */
+/* Coin Popup */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s;
+}
+
+.coin-popup {
+    width: 400px;
+    background: linear-gradient(to bottom, #4a90e2, #003366);
+    border: 4px solid #fff;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    position: relative;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.popup-close {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 35px;
+    height: 35px;
+    background: #FF5555;
+    color: white;
+    border: 3px solid white;
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 28px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.popup-close:hover {
+    background: #ff3333;
+    transform: scale(1.1);
+}
+
+.popup-header {
+    font-size: 32px;
+    font-weight: 800;
+    color: #FFD700; /* Gold */
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 20px;
+}
+
+.popup-content p {
+    font-size: 18px;
+    margin: 0 0 15px 0;
+    opacity: 0.9;
+}
+
+.reward-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.reward-row img {
+    width: 50px;
+    height: 50px;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
+}
+
+.reward-row span {
+    font-size: 48px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.btn-claim {
+    background: #88CE02;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.btn-claim:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #6FAB02;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Mode Panel Refined */
 .mode-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 5px;
+    padding: 0;
 }
 
 .mode-btn {
     background: #eee;
-    border-radius: 4px;
-    height: 85px;
+    background-color: #eee;
+    border-radius: 8px;
+    height: 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     cursor: pointer;
     position: relative;
-    color: #666;
+    color: #555;
+    padding-bottom: 10px;
+}
+
+.mode-btn:hover {
+    background: #ddd;
 }
 
 .mode-btn.active.red {
-    background: #FF5555;
+    background: #ff3f58;
     color: white;
+    border: none;
+}
+.mode-btn.active.red:hover {
+    background: #ff3f58;
+}
+.mode-btn.active.red:active {
+    box-shadow: 0 2px 0 #b33232;
+    transform: translateY(2px);
 }
 
-.mode-icon { font-size: 28px; margin-bottom: 8px; }
-.mode-name { font-size: 13px; font-weight: bold; text-align: center; line-height: 1.2; }
+.mode-name { 
+    font-size: 13px; 
+    font-weight: 800; 
+    text-align: center; 
+    line-height: 1.1; 
+    letter-spacing: -0.5px;
+    word-break: break-word; 
+    padding: 0 2px;
+}
 
-/* Party */
-.party-text {
-    font-size: 12px;
-    color: #666;
+/* Party Panel Header */
+.party-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #444;
+    font-size: 16px;
+}
+.party-title {
+    font-size: 22px;
+    font-weight: 800;
+}
+.party-panel {
     text-align: center;
-    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.party-text {
+    font-size: 15px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 .party-btns {
     display: flex;
-    gap: 5px;
+    gap: 8px;
+    padding: 0 5px;
+    justify-content: center;
+    width: 100%;
+    height: 30px;
+    max-width: 250px;
 }
 .btn-cyan {
-    background: #00B2E1;
+    background: #00d3ff;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     flex: 1;
-    padding: 8px;
-    font-weight: bold;
+    padding:  0px 0;
+    font-weight: 800;
+    font-size: 15px;
     cursor: pointer;
-    box-shadow: 0 3px 0 #0090B5;
+    transition: transform 0.1s;
+    font-family: 'Nunito', sans-serif;
 }
+.btn-cyan:hover { 
+  background: #00b2cc; 
+}
+.btn-cyan:active { 
+    background: #00b2cc;
+}
+
 .btn-join {
-    background: #88CE02; /* Use green for join button like screenshot */
+    background: #54c900; 
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     flex: 1;
-    padding: 8px;
-    font-weight: bold;
+    padding:  0px 0;
+    font-weight: 800;
+    font-size: 15px;
     cursor: pointer;
-    box-shadow: 0 3px 0 #6FAB02;
+    transition: transform 0.1s;
+    font-family: 'Nunito', sans-serif;
+}
+.btn-join:hover { 
+  background: #6FAB02; 
+}
+.btn-join:active { 
+  background: #6FAB02; 
 }
 
 /* Mobile Promo */
 .mobile-promo {
-    background: linear-gradient(to right, #ffffff, #e0e0e0);
-    padding: 10px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    background: linear-gradient(to right, #ffffff, #f0f0f0);
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
+    border: 1px solid #eee;
 }
 .mobile-promo b {
     display: block;
-    color: #00B2E1;
-    margin-bottom: 5px;
-    font-size: 14px;
+    color: #444; /* Dark gray */
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 800;
 }
 .store-badges {
     display: flex;
-    gap: 5px;
+    gap: 8px;
     justify-content: center;
 }
 .badge {
-    background: black;
+    background: #222;
     color: white;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 11px;
     cursor: pointer;
+    font-family: sans-serif;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+.badge:hover { background: #000; }
+
+/* Potions Row Refined */
+.potions-row {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+.potion {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.1s;
+}
+.potion:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.potion-img { 
+    width: 48px; 
+    height: 56px; 
+    border-radius: 12px; 
+    margin-bottom: 8px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+.potion-name { 
+    font-size: 11px; 
+    margin-bottom: 8px; 
+    color: #444; 
+    font-weight: 800; 
+    text-align: center;
+}
+.potion .btn-blue {
+    padding: 6px 0;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 3px 0 #0090B5;
+}
+.potion .btn-blue:active {
+    background: #00B2E1;
+    box-shadow: 0 1px 0 #0090B5;
+    transform: translateY(2px);
 }
 
 a:hover {
@@ -509,4 +884,11 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.mode-header {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 10px;
 }

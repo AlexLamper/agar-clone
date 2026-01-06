@@ -6,7 +6,7 @@ import { Virus } from './Virus.js';
 import { EjectedMass } from './EjectedMass.js';
 
 const WORLD_SIZE = 10000;
-const MAX_FOOD = 500;
+const MAX_FOOD = 2000; // Increased from 500
 const MAX_VIRUSES = 20;
 const BASE_SPEED = 2.5; // Reduced by 50%
 const GRID_SIZE = 100; // Size of each grid cell
@@ -166,9 +166,9 @@ export class World {
         // Collisions
         this.checkCollisions();
 
-        // Spawn food
+        // Spawn food - aggressively
         if (this.entities.filter(e => e.type === EntityType.Food).length < MAX_FOOD) {
-            this.spawnFood(10);
+            this.spawnFood(50); // Increased spawn rate
         }
         
         // Spawn viruses
@@ -225,7 +225,31 @@ export class World {
 
         if (dist > 0) {
             // Speed formula
-            const speed = Math.max(BASE_SPEED * Math.pow(cell.mass, -0.4) * 15, 1);
+            // Logarithmic decay? 
+            // Previous: BASE_SPEED * Math.pow(cell.mass, -0.4) * 15
+            // At mass 100: pow -> 0.158 -> speed ~ 2.37 * BASE
+            // At mass 1000: pow -> 0.063 -> speed ~ 0.94 * BASE
+            // At mass 10000: pow -> 0.025 -> speed ~ 0.3 * BASE (Too slow)
+            
+            // New Formula: Slower decay
+            // Try pow -0.3
+            // mass 100: 0.25 -> 3.75 * B
+            // mass 1000: 0.125 -> 1.8 * B 
+            // mass 10000: 0.063 -> 0.9 * B
+            
+            // Adjust factor to keep small cells fast but reasonable.
+            const slowDown = Math.pow(cell.mass, -0.3); 
+            // At mass 35 (start): 0.34
+            // At mass 10: 0.5
+            // So we want a multiplier.
+            
+            // Let's hardcode a better curve.
+            // Speed = Base * (1 / (1 + mass/2000)) ? No linear decay is bad.
+            
+            // Use old formula but clamp minimum speed and reduce decay.
+            const decay = Math.pow(cell.mass, -0.35); // Slightly less aggressive than -0.44
+            const speed = Math.max(BASE_SPEED * decay * 15, 2.5); // Min speed 2.5
+            
             const moveDist = Math.min(speed, dist);
             cell.position.x += (dx / dist) * moveDist;
             cell.position.y += (dy / dist) * moveDist;
@@ -253,24 +277,34 @@ export class World {
     }
 
     private checkCollisions() {
+        const removedEntityIds = new Set<string>();
+
         this.players.forEach(player => {
             player.cells.forEach(cell => {
+                // Skip if this cell was already removed (merged into another)
+                if (removedEntityIds.has(cell.id)) return;
+
                 const candidates = this.spatialHash.query(cell.position, cell.radius + 100); 
 
                 for (const other of candidates) {
                     if (cell.id === other.id) continue;
-                    
+                    if (removedEntityIds.has(other.id)) continue; // Already eaten this tick
+
                     if (other.type === EntityType.Food) {
                          if (this.getDistance(cell.position, other.position) < cell.radius) {
                             cell.setMass(cell.mass + 1);
                             player.updateScore();
+                            player.addXp(1);
                             this.removeEntity(other.id);
+                            removedEntityIds.add(other.id);
                          }
                     } else if (other.type === EntityType.Projectile) {
                          if (this.getDistance(cell.position, other.position) < cell.radius) {
                              cell.setMass(cell.mass + 13);
                              player.updateScore();
+                             player.addXp(5);
                              this.removeEntity(other.id);
+                             removedEntityIds.add(other.id);
                          }
                     } else if (other.type === EntityType.Virus) {
                          const virus = other as Virus;
@@ -278,6 +312,8 @@ export class World {
                              this.getDistance(cell.position, virus.position) < cell.radius) {
                              
                              this.removeEntity(virus.id);
+                             removedEntityIds.add(virus.id);
+                             player.addXp(50);
                              this.explodeCell(player, cell); 
                          }
                     } else if (other.type === EntityType.Player) {
@@ -298,6 +334,7 @@ export class World {
                                      cell.setMass(cell.mass + otherCell.mass);
                                      player.removeCell(otherCell.id);
                                      this.removeEntity(otherCell.id);
+                                     removedEntityIds.add(otherCell.id);
                                 }
                             } else {
                                 // Elastic collision / Push apart
@@ -331,9 +368,11 @@ export class World {
                             
                             cell.setMass(cell.mass + otherCell.mass);
                             player.updateScore();
+                            player.addXp(Math.floor(otherCell.mass));
                             const victim = this.players.get(otherCell.playerId);
                             if (victim) victim.removeCell(otherCell.id);
                             this.removeEntity(otherCell.id);
+                            removedEntityIds.add(otherCell.id);
                         }
                     }
                 }
