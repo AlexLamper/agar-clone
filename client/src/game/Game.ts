@@ -1,4 +1,4 @@
-import { MessageType } from 'shared';
+import { MessageType, EntityType } from 'shared';
 import type { BaseEntity, ServerMessage, Player } from 'shared';
 import { Input } from './Input';
 import { Renderer } from './Renderer';
@@ -24,6 +24,8 @@ export class Game {
     
     private isRunning: boolean = false;
     private lastInputTime: number = 0;
+    private hasJoined: boolean = false;
+    private deathTime: number = 0;
     
     // For interpolation
     private clientEntities: Map<string, InterpolatedEntity> = new Map();
@@ -37,6 +39,7 @@ export class Game {
         this.socket = new Socket('ws://localhost:3000', (msg) => this.handleMessage(msg));
 
         this.setupUI();
+        this.setupGameOverUI();
     }
 
     private setupUI() {
@@ -55,6 +58,14 @@ export class Game {
             if (savedColor) colorInput.value = savedColor;
         }
 
+        const restartBtn = document.getElementById('restartBtn');
+        restartBtn?.addEventListener('click', () => {
+             const gameOverOverlay = document.getElementById('game-over-overlay');
+             if (gameOverOverlay) gameOverOverlay.style.display = 'none';
+             if (overlay) overlay.style.display = 'flex';
+             this.clientEntities.clear();
+        });
+
         btn?.addEventListener('click', () => {
              const name = input.value || 'Guest';
              const color = colorInput?.value;
@@ -65,7 +76,21 @@ export class Game {
 
              this.socket.sendJoin(name, color);
              if (overlay) overlay.style.display = 'none';
+             this.hasJoined = true;
+             this.deathTime = 0;
              this.start();
+        });
+    }
+
+    private setupGameOverUI() {
+        const restartBtn = document.getElementById('restartBtn');
+        const overlay = document.getElementById('game-over-overlay');
+        const uiOverlay = document.getElementById('ui-overlay');
+
+        restartBtn?.addEventListener('click', () => {
+            if (overlay) overlay.style.display = 'none';
+            if (uiOverlay) uiOverlay.style.display = 'flex'; // Go back to main menu
+            this.hasJoined = false;
         });
     }
 
@@ -82,6 +107,29 @@ export class Game {
 
         // Process Interpolation
         this.updateInterpolation();
+
+        // Check Death
+        if (this.hasJoined && this.me) {
+             const myCells = Array.from(this.clientEntities.values())
+                .filter(e => e.type === EntityType.Player && (e as any).playerId === this.me!.id);
+             
+             // Simple death check:Joined but no cells found in update
+             // Need a grace period? Init message should come first.
+             // If we have received entities at least once, and now have 0, we dead.
+             if (this.clientEntities.size > 0 && myCells.length === 0) {
+                 // Check if we just died or if it's lag
+                 // Let's assume death if it persists for a few frames?
+                 // Or just trigger immediate.
+                 if (this.deathTime === 0) {
+                     this.deathTime = Date.now();
+                 } else if (Date.now() - this.deathTime > 1000) {
+                     // 1 second confirm
+                     this.showGameOver();
+                 }
+             } else {
+                 this.deathTime = 0;
+             }
+        }
 
         // Send Input (Throttled to 20Hz)
         const now = Date.now();
@@ -115,6 +163,15 @@ export class Game {
                  this.input.setCameraPos({ x: cx, y: cy });
              }
         }
+    }
+
+    private showGameOver() {
+        const overlay = document.getElementById('game-over-overlay');
+        const scoreSpan = document.getElementById('finalScore');
+        if (scoreSpan && this.me) scoreSpan.innerText = this.me.score.toString();
+        
+        if (overlay) overlay.style.display = 'flex';
+        this.isRunning = false; 
     }
 
     private updateInterpolation() {
@@ -155,6 +212,9 @@ export class Game {
                 break;
             case MessageType.LEADERBOARD:
                 this.leaderboard = msg.entries;
+                break;
+            case MessageType.GAME_OVER:
+                this.showGameOver();
                 break;
         }
     }

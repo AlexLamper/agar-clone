@@ -6,8 +6,8 @@ import { Virus } from './Virus.js';
 import { EjectedMass } from './EjectedMass.js';
 
 const WORLD_SIZE = 10000;
-const MAX_FOOD = 5000;
-const MAX_VIRUSES = 100;
+const MAX_FOOD = 500;
+const MAX_VIRUSES = 20;
 const BASE_SPEED = 2.5; // Reduced by 50%
 const GRID_SIZE = 100; // Size of each grid cell
 
@@ -102,7 +102,7 @@ export class World {
     public players: Map<string, Player> = new Map();
     public width: number = WORLD_SIZE;
     public height: number = WORLD_SIZE;
-    private spatialHash: SpatialHash;
+    public spatialHash: SpatialHash;
 
     constructor() {
         this.spatialHash = new SpatialHash(GRID_SIZE);
@@ -381,7 +381,7 @@ export class World {
         }
     }
 
-    private getRandomPosition(): Vector2 {
+    public getRandomPosition(): Vector2 {
         return {
             x: Math.random() * this.width,
             y: Math.random() * this.height

@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { World } from '../game/World.js';
 import { Player } from '../game/Player.js';
+import { Bot } from '../game/Bot.js';
 import { 
     MessageType, 
     ClientMessage, 
@@ -16,6 +17,7 @@ export class GameServer {
     private interval: NodeJS.Timeout | null = null;
     private TICK_RATE = 40; // 40Hz for smoother gameplay
     private tickCount = 0;
+    private bots: Bot[] = [];
 
     constructor(port: number) {
         this.wss = new WebSocketServer({ port });
@@ -23,6 +25,13 @@ export class GameServer {
 
         this.wss.on('connection', (ws) => this.handleConnection(ws));
         
+        // Add Bots
+        for (let i = 0; i < 2; i++) {
+             const bot = new Bot(uuidv4(), `Bot ${i+1}`, this.world);
+             this.bots.push(bot);
+             this.world.addPlayer(bot);
+        }
+
         console.log(`Server started on port ${port}`);
     }
 
@@ -80,6 +89,9 @@ export class GameServer {
     }
 
     private tick() {
+        // Update Bots
+        this.bots.forEach(bot => bot.tick());
+
         this.world.tick();
         this.broadcastUpdate();
         
@@ -91,7 +103,21 @@ export class GameServer {
 
     private broadcastUpdate() {
         // Send updates individually based on viewport
+        const deadPlayers: string[] = [];
+
         this.world.players.forEach(player => {
+            if (player instanceof Bot) return; // Skip bots updates
+
+            if (player.cells.length === 0) {
+                // Dead
+                if (player.socket.readyState === WebSocket.OPEN) {
+                    const msg = { type: MessageType.GAME_OVER };
+                    player.socket.send(JSON.stringify(msg));
+                }
+                deadPlayers.push(player.id);
+                return;
+            }
+
             if (player.socket.readyState === WebSocket.OPEN) {
                 // Get visible entities
                 // Zoom factor: As player grows, view grows.
@@ -115,6 +141,9 @@ export class GameServer {
                 player.socket.send(JSON.stringify(updateMsg));
             }
         });
+
+        // Cleanup dead players
+        deadPlayers.forEach(id => this.world.removePlayer(id));
     }
 
     private broadcastLeaderboard() {

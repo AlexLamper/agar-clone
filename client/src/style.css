@@ -22,7 +22,7 @@ canvas {
 }
 
 /* UI Overlay */
-#ui-overlay {
+.overlay-container, #ui-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -36,7 +36,7 @@ canvas {
     pointer-events: none; /* Let clicks pass through if needed, but menu needs pointer events */
 }
 
-#ui-overlay > * {
+.overlay-container > *, #ui-overlay > * {
     pointer-events: auto;
 }
 

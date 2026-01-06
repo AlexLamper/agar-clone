@@ -169,6 +169,18 @@
 
         </div>
     </div>
+
+    <!-- Game Over Overlay -->
+    <div id="game-over-overlay" class="overlay-container" style="display: none;">
+         <div class="panel play-panel" style="width: 400px; margin: auto;">
+             <h2 style="font-family: 'Nunito', sans-serif; text-align: center;">Game Over</h2>
+             <div id="final-stats" style="margin: 20px 0; text-align: center; color: #666; font-family: 'Nunito', sans-serif;">
+                 Score: <span id="finalScore" style="font-weight: bold; color: #333; font-size: 24px;">0</span>
+             </div>
+             <button id="restartBtn" class="btn-play">Play Again</button>
+         </div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
