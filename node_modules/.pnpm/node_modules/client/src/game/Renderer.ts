@@ -29,7 +29,7 @@ export class Renderer {
         window.addEventListener('resize', () => this.resize());
     }
 
-    private createSkinCanvas(skin: SkinDef): HTMLCanvasElement {
+    public createSkinCanvas(skin: SkinDef): HTMLCanvasElement {
         const c = document.createElement('canvas');
         c.width = skin.width;
         c.height = skin.height;
@@ -50,11 +50,23 @@ export class Renderer {
         return c;
     }
 
+    public registerSkins(skins: SkinDef[]) {
+        skins.forEach(skin => {
+            if (skin.id !== 'none' && !this.skinCanvasCache.has(skin.id)) {
+                const sCanvas = this.createSkinCanvas(skin);
+                this.skinCanvasCache.set(skin.id, sCanvas);
+                skin.canvas = sCanvas;
+            }
+        });
+    }
+
     resize() {
         this.width = window.innerWidth;
         this.height = window.innerHeight;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+        // Important for pixel art to stay sharp when scaled
+        this.ctx.imageSmoothingEnabled = false;
     }
 
     render(entities: BaseEntity[], players: Player[], me: Player | undefined, worldSize: number, leaderboard: {name: string, score: number}[], zoom: number = 1.0) {
@@ -183,6 +195,17 @@ export class Renderer {
                 this.ctx.arc(entity.position.x, entity.position.y, entity.radius, 0, Math.PI * 2);
                 this.ctx.clip();
                 
+                // Solid Background for skin
+                this.ctx.fillStyle = '#000000'; // Or entity.color? 
+                // User asked for "Border shouldn't be transparent... make it solid". 
+                // This implies the INSIDE of the border. If the skin has transparency, we want it filled?
+                // Or maybe they mean the stroke line itself?
+                // "The border shouldn't be transparent (of the blob/player/skin), make it solid."
+                // Currently EntityType.Player logic draws stroke.
+                // If I fill here, any holes in pixel art become black (or entity color).
+                this.ctx.fillStyle = entity.color; 
+                this.ctx.fill();
+
                 const size = entity.radius * 2;
                 // Draw image centered at entity position
                 // Check if skinCanvas is valid size

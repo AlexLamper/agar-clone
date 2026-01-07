@@ -18,6 +18,7 @@ body, html {
 
 canvas {
     display: block;
+    image-rendering: pixelated; /* Ensure crisp scaling if canvas is zoomed via CSS */
 }
 
 /* UI Overlay */
@@ -481,10 +482,10 @@ canvas {
     font-weight: bold;
     border-radius: 4px;
     cursor: pointer;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     transition: transform 0.1s;
     max-width: 260px;
-    height: 40px;
+    height: 35px;
 }
 
 .btn-play:hover {
@@ -627,6 +628,31 @@ canvas {
 .skin-item.selected {
     border-color: #FFD700;
     box-shadow: 0 0 15px #FFD700;
+}
+
+/* Skin Editor */
+.skin-editor-popup {
+    background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
+}
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.palette-color {
+    width: 25px;
+    height: 25px;
+    border: 2px solid #555;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.palette-color.active {
+    border-color: #fff;
+    transform: scale(1.2);
+    box-shadow: 0 0 5px rgba(255,255,255,0.5);
 }
 
 .btn-claim {

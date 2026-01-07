@@ -38,6 +38,38 @@ export class Game {
         this.renderer = new Renderer(this.canvas);
         this.input = new Input(this.canvas);
         
+        // Load custom skins on startup (Moved here to ensure loaded before UI rendering)
+        const existingCustomsStr = localStorage.getItem('agar_custom_skins');
+        if (existingCustomsStr) {
+             try {
+                const customs: SkinDef[] = JSON.parse(existingCustomsStr);
+                customs.forEach(c => {
+                    // Avoid dups
+                    if (!SKINS.find(s => s.id === c.id)) {
+                        SKINS.push(c);
+                        // Generate canvas cache via renderer
+                        c.canvas = this.renderer.createSkinCanvas(c);
+                        // Also inject into renderer internal cache if needed, but renderer exposes createSkinCanvas purely functional? 
+                        // Actually renderer has internal cache `this.skinCanvasCache.set(skin.id, sCanvas);`
+                        // We need to call that.
+                        // Or we expose a method `registerSkin(skin)` on renderer.
+                        // For now, let's just piggyback on `createSkinCanvas` being public and cache handling in updateSkinUI loop?
+                        // No, Renderer's loop happens in constructor.
+                        // We should expose a register method.
+                        
+                        // Hack: Since Renderer.ts uses SKINS global export in its constructor, 
+                        // if we push to SKINS *after* renderer is created, renderer won't cache them automatically.
+                        // But `updateSkinUI` calls `createSkinCanvas` and caches on `this.selectedSkin.canvas`.
+                        // But `render` loop uses `skinCanvasCache`.
+                        // Fix: Let's make `render` use `skin.canvas` if available? Or add to cache.
+                    }
+                });
+                
+                // Hacky fix: Manually add to renderer cache
+                this.renderer.registerSkins(customs);
+             } catch(e) { console.error("Error loading custom skins", e); }
+        }
+
         // Auto connect
         this.socket = new Socket('ws://localhost:3000', (msg) => this.handleMessage(msg));
 
@@ -131,6 +163,9 @@ export class Game {
                  skinGrid.appendChild(el);
              });
         }
+        
+        // --- Skin Editor Logic ---
+        this.setupSkinEditor(renderSkinGrid);
 
         // Free Coins Logic
         const freeCoinsBtn = document.getElementById('freeCoinsBtn');
@@ -466,6 +501,12 @@ export class Game {
             skinPreview.style.backgroundColor = '#cccccc'; // Default placeholder
         } else {
             // Use the cached canvas if available
+            // If it's a new custom skin, we might need to generate the canvas or it should already be there
+            if (!this.selectedSkin.canvas) {
+                // Try to generate on the fly if missing (e.g. just created)
+                this.selectedSkin.canvas = this.renderer.createSkinCanvas(this.selectedSkin);
+            }
+
             if (this.selectedSkin.canvas) {
                 skinPreview.style.backgroundImage = `url(${this.selectedSkin.canvas.toDataURL()})`;
                 skinPreview.style.backgroundSize = 'cover';
@@ -474,5 +515,200 @@ export class Game {
                 skinPreview.style.imageRendering = 'pixelated'; 
             }
         }
+    }
+
+    private setupSkinEditor(refreshGrid: () => void) {
+        const btnCreate = document.getElementById('btn-create-skin');
+        const editorOverlay = document.getElementById('skin-editor-overlay');
+        const btnSave = document.getElementById('btn-save-skin');
+        const btnCancel = document.getElementById('btn-cancel-skin');
+        const closeEditor = document.getElementById('close-editor-modal');
+        const canvas = document.getElementById('editorCanvas') as HTMLCanvasElement;
+        const colorPicker = document.getElementById('editorColorPicker') as HTMLInputElement;
+        const paletteContainer = document.getElementById('editorPalette');
+        const nameInput = document.getElementById('editorSkinName') as HTMLInputElement;
+        
+        if (!btnCreate || !editorOverlay || !canvas) return;
+
+        const GRID_SIZE = 16;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.imageSmoothingEnabled = false;
+
+        // Editor State
+        let currentColor = '#ff0000';
+        let pixels: string[][] = []; // [y][x] hex color
+        
+        // Init Grid
+        const resetGrid = () => {
+             pixels = [];
+             for(let y=0; y<GRID_SIZE; y++) {
+                 const row = [];
+                 for(let x=0; x<GRID_SIZE; x++) {
+                     row.push('#ffffff'); // Start filled white
+                 }
+                 pixels.push(row);
+             }
+        };
+
+        const drawGrid = () => {
+             const scale = canvas.width / GRID_SIZE;
+             ctx.clearRect(0, 0, canvas.width, canvas.height);
+             for(let y=0; y<GRID_SIZE; y++) {
+                 for(let x=0; x<GRID_SIZE; x++) {
+                     ctx.fillStyle = pixels[y][x];
+                     ctx.fillRect(x*scale, y*scale, scale, scale);
+                     // Grid lines
+                     /*
+                     ctx.strokeStyle = '#ccc';
+                     ctx.lineWidth = 1;
+                     ctx.strokeRect(x*scale, y*scale, scale, scale);
+                     */
+                 }
+             }
+        };
+
+        const generatePalette = () => {
+             if (!paletteContainer) return;
+             paletteContainer.innerHTML = '';
+             const defaultColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#000000', '#FFA500', '#808080'];
+             defaultColors.forEach(c => {
+                 const d = document.createElement('div');
+                 d.className = 'palette-color';
+                 d.style.backgroundColor = c;
+                 d.onclick = () => {
+                     currentColor = c;
+                     if (colorPicker) colorPicker.value = c;
+                 };
+                 paletteContainer.appendChild(d);
+             });
+        };
+
+        btnCreate.addEventListener('click', () => {
+            resetGrid();
+            drawGrid();
+            generatePalette();
+            // Close selector, open editor
+            const selector = document.getElementById('skin-modal-overlay');
+            if (selector) selector.style.display = 'none';
+            editorOverlay.style.display = 'flex';
+        });
+
+        const closeFn = () => {
+            editorOverlay.style.display = 'none';
+            // Re-open selector
+            const selector = document.getElementById('skin-modal-overlay');
+            if (selector) selector.style.display = 'flex';
+        };
+
+        btnCancel?.addEventListener('click', closeFn);
+        closeEditor?.addEventListener('click', closeFn);
+
+        // Drawing Logic
+        let isDrawing = false;
+        const paint = (e: MouseEvent) => {
+             const rect = canvas.getBoundingClientRect();
+             const x = Math.floor((e.clientX - rect.left) / (rect.width / GRID_SIZE));
+             const y = Math.floor((e.clientY - rect.top) / (rect.height / GRID_SIZE));
+             
+             if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                 if (e.buttons === 1) { // Left click paint
+                     pixels[y][x] = currentColor;
+                     drawGrid();
+                 } else if (e.buttons === 2) { // Right click pick
+                     currentColor = pixels[y][x];
+                     if(colorPicker) colorPicker.value = currentColor;
+                 }
+             }
+        };
+
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
+        canvas.addEventListener('mousemove', (e) => { if (isDrawing) paint(e); });
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseleave', () => isDrawing = false);
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        colorPicker?.addEventListener('input', (e) => {
+            currentColor = (e.target as HTMLInputElement).value;
+        });
+
+        // Save
+        btnSave?.addEventListener('click', () => {
+            // Convert pixels to skin def
+            const id = 'custom_' + Date.now();
+            const pixStrings: string[] = [];
+            const palette: {[k:string]: string} = {};
+            let charCode = 65; // A
+
+            // Map unique colors to chars
+            const colorMap = new Map<string, string>();
+            
+            pixels.forEach(row => {
+                let rowStr = "";
+                row.forEach(c => {
+                    if (!colorMap.has(c)) {
+                        const char = String.fromCharCode(charCode++);
+                        colorMap.set(c, char);
+                        palette[char] = c;
+                    }
+                    rowStr += colorMap.get(c);
+                });
+                pixStrings.push(rowStr);
+            });
+
+            // Make sure corners are NOT transparent - we initialized with white.
+            // User requirement: "Always have all pixels filled". 
+            // Our logic fills with white initially, so unless we add erase tool, it's solid.
+
+            // Use the SkinDef interface
+            const newSkin: SkinDef = {
+                id,
+                name: nameInput.value || 'Custom',
+                width: GRID_SIZE,
+                height: GRID_SIZE,
+                palette,
+                pixels: pixStrings
+            };
+
+            // Add to list
+            SKINS.push(newSkin);
+            
+            // Generate canvas immediately
+            newSkin.canvas = this.renderer.createSkinCanvas(newSkin);
+            this.renderer.registerSkins([newSkin]);
+
+            // Save to LocalStorage (simple array of custom skins)
+            // Just saving one for now or appending? 
+            // For this task, persisting in runtime memory and localstorage array is good.
+            const existingCustomsStr = localStorage.getItem('agar_custom_skins');
+            let customs = existingCustomsStr ? JSON.parse(existingCustomsStr) : [];
+            customs.push(newSkin);
+            localStorage.setItem('agar_custom_skins', JSON.stringify(customs));
+
+            // Select it
+            this.selectedSkin = newSkin;
+            this.updateSkinUI();
+            
+            refreshGrid(); // Update the grid with new skin
+            closeFn();
+        });
+        
+        // Load custom skins on startup
+        /* Moved to constructor 
+        const existingCustomsStr = localStorage.getItem('agar_custom_skins');
+        if (existingCustomsStr) {
+             try {
+                const customs: SkinDef[] = JSON.parse(existingCustomsStr);
+                customs.forEach(c => {
+                    // Avoid dups
+                    if (!SKINS.find(s => s.id === c.id)) {
+                        SKINS.push(c);
+                        // Generate canvas? handled by updateSkinUI lazy load or manual loop
+                        // Need access to renderer.
+                    }
+                });
+             } catch(e) { console.error("Error loading custom skins", e); }
+        }
+        */
     }
 }
