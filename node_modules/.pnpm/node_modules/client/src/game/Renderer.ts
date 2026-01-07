@@ -225,7 +225,7 @@ export class Renderer {
         }
         
         if (entity.type === EntityType.Player) {
-             this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+             this.ctx.strokeStyle = '#000000';
              this.ctx.lineWidth = 4 + entity.radius * 0.05;
              this.ctx.stroke();
 

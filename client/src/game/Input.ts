@@ -6,7 +6,7 @@ export class Input {
 
     public split: boolean = false;
     public eject: boolean = false;
-    public zoom: number = 1.2; // Zoom a bit more in by default
+    public zoom: number = 1;
 
     constructor(canvas: HTMLCanvasElement) {
         window.addEventListener('mousemove', (e) => this.onMouseMove(e));
@@ -32,7 +32,7 @@ export class Input {
         e.preventDefault();
         const zoomSpeed = 0.001;
         this.zoom -= e.deltaY * zoomSpeed;
-        this.zoom = Math.max(0.5, Math.min(2.0, this.zoom)); // Max zoom out clamped
+        this.zoom = Math.max(1.0, Math.min(2.0, this.zoom));
     }
 
     // Returns world coordinates target based on mouse position

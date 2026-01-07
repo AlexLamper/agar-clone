@@ -71,7 +71,13 @@ export class Game {
         }
 
         // Auto connect
-        this.socket = new Socket('ws://localhost:3000', (msg) => this.handleMessage(msg));
+        // Determine WebSocket URL based on environment
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = import.meta.env.PROD ? window.location.host : 'localhost:3000';
+        const wsUrl = `${protocol}//${host}`;
+        
+        console.log('Connecting to Server:', wsUrl);
+        this.socket = new Socket(wsUrl, (msg) => this.handleMessage(msg));
 
         this.setupUI();
         this.setupGameOverUI();
