@@ -16,6 +16,7 @@ export interface BaseEntity {
     position: Vector2;
     radius: number;
     color: string;
+    skin?: string;
 }
 
 export interface Player {

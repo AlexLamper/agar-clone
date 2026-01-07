@@ -115,7 +115,7 @@ export class World {
         // Spawn initial cell
         const pos = this.getRandomPosition();
         const startColor = color || this.getRandomColor();
-        const cell = new Cell(player.id, pos, 50, startColor);
+        const cell = new Cell(player.id, pos, 50, startColor, player.skin);
         player.addCell(cell);
         this.entities.push(cell);
     }

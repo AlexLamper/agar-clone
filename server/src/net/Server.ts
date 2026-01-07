@@ -66,7 +66,7 @@ export class GameServer {
         // console.log('Processing message:', msg.type);
         switch (msg.type) {
             case MessageType.JOIN:
-                const player = new Player(playerId, msg.name, ws);
+                const player = new Player(playerId, msg.name, ws, msg.skin);
                 this.world.addPlayer(player, msg.color);
                 
                 // Send Init

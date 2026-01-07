@@ -40,6 +40,19 @@
         </div>
     </div>
 
+    <!-- Skin Selection Modal -->
+    <div id="skin-modal-overlay" class="popup-overlay" style="display: none;">
+        <div class="coin-popup skin-popup">
+             <div id="close-skin-modal" class="popup-close">×</div>
+             <div class="popup-header">Select Skin</div>
+             <div class="popup-content">
+                <div class="skin-grid" id="skinGrid">
+                    <!-- Skins injected here -->
+                </div>
+             </div>
+        </div>
+    </div>
+
     <!-- UI Overlay -->
     <div id="ui-overlay">
         
@@ -166,7 +179,6 @@
                         <div class="skin-circle" id="skinSelector">
                              <div class="skin-preview" id="skinPreview" style="background-color: #ff0000;"></div>
                              <span class="plus-icon">+</span>
-                             <input type="color" id="playerColor" value="#ff0000" class="hidden-color-input" />
                         </div>
                         <input type="text" id="playerName" placeholder="Nick" maxlength="15" value="Simba" />
                     </div>

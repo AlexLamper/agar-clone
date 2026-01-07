@@ -16,6 +16,7 @@ export interface JoinMessage {
     type: MessageType.JOIN;
     name: string;
     color?: string;
+    skin?: string;
 }
 
 export interface ClaimHourlyMessage {

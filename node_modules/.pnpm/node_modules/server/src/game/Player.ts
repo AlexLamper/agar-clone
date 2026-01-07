@@ -10,6 +10,7 @@ export class Player implements PlayerState {
     public score: number = 0;
     public cells: Cell[] = [];
     public socket: WebSocket;
+    public skin?: string;
 
     // Progression
     public xp: number = 0;
@@ -17,10 +18,11 @@ export class Player implements PlayerState {
     public coins: number = 0;
     public lastHourlyLine: number = 0;
 
-    constructor(id: string, name: string, socket: WebSocket) {
+    constructor(id: string, name: string, socket: WebSocket, skin?: string) {
         this.id = id;
         this.name = name;
         this.socket = socket;
+        this.skin = skin;
     }
 
     addXp(amount: number) {
@@ -87,7 +89,7 @@ export class Player implements PlayerState {
                 y: cell.position.y + dirY * (cell.radius * 0.1)
             };
 
-            const newCell = new Cell(this.id, startPos, newMass, cell.color);
+            const newCell = new Cell(this.id, startPos, newMass, cell.color, cell.skin);
             newCell.target = target;
             // Boost - slightly stronger
             newCell.velocity = { x: dirX * 40, y: dirY * 40 };

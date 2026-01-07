@@ -3,6 +3,8 @@ import type { BaseEntity, ServerMessage, Player } from 'shared';
 import { Input } from './Input';
 import { Renderer } from './Renderer';
 import { Socket } from '../net/Socket';
+import { SKINS } from '../skins';
+import type { SkinDef } from '../skins';
 
 // Interpolation wrapper
 interface InterpolatedEntity extends BaseEntity {
@@ -16,6 +18,7 @@ export class Game {
     private renderer: Renderer;
     private input: Input;
     private socket: Socket;
+    private selectedSkin: SkinDef = SKINS[0];
 
     private players: Player[] = []; 
     private leaderboard: {name: string, score: number}[] = [];
@@ -53,22 +56,80 @@ export class Game {
             const savedName = localStorage.getItem('agar_playerName');
             if (savedName) input.value = savedName;
         }
+        
+        // Load Skin Preference
+        const savedSkinId = localStorage.getItem('agar_skinId');
+        if (savedSkinId) {
+            const skin = SKINS.find(s => s.id === savedSkinId);
+            if (skin) {
+                 this.selectedSkin = skin;
+            }
+        }
+        this.updateSkinUI();
 
         // Color Picker Logic
         const skinPreview = document.getElementById('skinPreview');
         const playerColorInput = document.getElementById('playerColor') as HTMLInputElement;
+        const plusIcon = document.querySelector('.plus-icon') as HTMLElement;
         
-        if (playerColorInput && skinPreview) {
-            const savedColor = localStorage.getItem('agar_playerColor');
-            if (savedColor) {
-                 playerColorInput.value = savedColor;
-                 skinPreview.style.backgroundColor = savedColor;
-            }
+        if (skinPreview) {
+            // Default "No Skin" preview (maybe default color or just gray)
+            skinPreview.style.backgroundColor = '#cccccc';
+        }
 
-            playerColorInput.addEventListener('input', (e) => {
-                const val = (e.target as HTMLInputElement).value;
-                skinPreview.style.backgroundColor = val;
-            });
+        // Skin Modal Logic
+        const skinSelector = document.getElementById('skinSelector');
+        const skinModal = document.getElementById('skin-modal-overlay');
+        const closeSkinModal = document.getElementById('close-skin-modal');
+        const skinGrid = document.getElementById('skinGrid');
+
+        const openSkinModal = (e: Event) => {
+             e.preventDefault();
+             e.stopPropagation();
+             if (skinModal) skinModal.style.display = 'flex';
+             renderSkinGrid();
+        };
+
+        const closeSkinModalFn = () => {
+             if (skinModal) skinModal.style.display = 'none';
+        }
+
+        if (skinSelector) skinSelector.addEventListener('click', openSkinModal);
+        if (closeSkinModal) closeSkinModal.addEventListener('click', closeSkinModalFn);
+
+        // Click outside to close
+        skinModal?.addEventListener('click', (e) => {
+            if (e.target === skinModal) closeSkinModalFn();
+        });
+
+        const renderSkinGrid = () => {
+             if (!skinGrid) return;
+             skinGrid.innerHTML = '';
+             SKINS.forEach(skin => {
+                 const el = document.createElement('div');
+                 el.className = 'skin-item';
+                 if (skin.id === this.selectedSkin.id) el.classList.add('selected');
+                 
+                 // Render Content
+                 if (skin.id === 'none') {
+                     // Show color or just text
+                     el.innerText = 'No Skin';
+                     el.style.display = 'flex';
+                     el.style.alignItems = 'center';
+                     el.style.justifyContent = 'center';
+                     el.style.fontSize = '12px';
+                     el.style.color = '#333';
+                 } else if (skin.canvas) {
+                     el.style.backgroundImage = `url(${skin.canvas.toDataURL()})`;
+                 }
+                 
+                 el.addEventListener('click', () => {
+                     this.selectedSkin = skin;
+                     this.updateSkinUI();
+                     closeSkinModalFn();
+                 });
+                 skinGrid.appendChild(el);
+             });
         }
 
         // Free Coins Logic
@@ -129,13 +190,29 @@ export class Game {
 
         btn?.addEventListener('click', () => {
              const name = input.value || 'Guest';
-             const color = colorInput?.value;
-
+             
+             // Logic: If skin is 'none', send UNDEFINED color (server picks random).
+             // If skin is selected, send 'none' or null as color, server uses skin.
+             // Actually, server code: if (skin) user has skin. Color is secondary or ignored?
+             // Let's send undefined for color so server picks random color if no skin, 
+             // or server picks random color for the "underneath" of the skin.
+             
              // Save preferences
              localStorage.setItem('agar_playerName', name);
-             if (color) localStorage.setItem('agar_playerColor', color);
+             if (this.selectedSkin.id !== 'none') {
+                  localStorage.setItem('agar_skinId', this.selectedSkin.id);
+             } else {
+                  localStorage.removeItem('agar_skinId');
+             }
+             
+             // If "No Skin" is selected, we want a RANDOM color.
+             // If we send 'undefined' color, server logic `const startColor = color || this.getRandomColor();` handles it.
+             // So we just don't send color at all.
 
-             this.socket.sendJoin(name, color);
+             const skinId = this.selectedSkin.id === 'none' ? undefined : this.selectedSkin.id;
+             console.log("Joing with skin:", skinId); // Debug
+             this.socket.sendJoin(name, undefined, skinId);
+
              if (overlay) overlay.style.display = 'none';
              this.hasJoined = true;
              this.deathTime = 0;
@@ -334,6 +411,7 @@ export class Game {
 
     private syncEntities(serverEntities: BaseEntity[]) {
         const serverIds = new Set(serverEntities.map(e => e.id));
+        // console.log('Syncing count:', serverEntities.length); // Debug
 
         // Update or Add
         serverEntities.forEach(sEntity => {
@@ -353,13 +431,15 @@ export class Game {
 
                 current.mass = (sEntity as any).mass; // Hacky cast
                 current.color = sEntity.color;
-                if ((sEntity as any).skin) (current as any).skin = (sEntity as any).skin;
+                
+                // Force update skin if present
+                if ((sEntity as any).skin !== undefined) {
+                     // console.log('Entity has skin:', (sEntity as any).skin);
+                     (current as any).skin = (sEntity as any).skin;
+                }
             } else {
                 // Add new
-                // If this is a split cell, it might be better to spawn it at the parent's location?
-                // But we don't know the parent. 
-                // However, splitting usually happens with high velocity.
-                // If we get a new entity with high velocity (not sent here), it moves fast.
+                if ((sEntity as any).skin) console.log("New entity skin:", (sEntity as any).skin);
                 
                 this.clientEntities.set(sEntity.id, {
                     ...sEntity,
@@ -373,6 +453,25 @@ export class Game {
         for (const id of this.clientEntities.keys()) {
             if (!serverIds.has(id)) {
                 this.clientEntities.delete(id);
+            }
+        }
+    }
+
+    private updateSkinUI() {
+        const skinPreview = document.getElementById('skinPreview');
+        if (!skinPreview) return;
+
+        if (this.selectedSkin.id === 'none') {
+            skinPreview.style.backgroundImage = 'none';
+            skinPreview.style.backgroundColor = '#cccccc'; // Default placeholder
+        } else {
+            // Use the cached canvas if available
+            if (this.selectedSkin.canvas) {
+                skinPreview.style.backgroundImage = `url(${this.selectedSkin.canvas.toDataURL()})`;
+                skinPreview.style.backgroundSize = 'cover';
+                skinPreview.style.backgroundColor = 'transparent'; // Clear bg
+                // Ensure pixelated look for preview
+                skinPreview.style.imageRendering = 'pixelated'; 
             }
         }
     }

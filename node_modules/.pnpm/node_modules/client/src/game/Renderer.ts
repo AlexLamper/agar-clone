@@ -1,13 +1,14 @@
 import { EntityType } from 'shared';
 import type { BaseEntity, Player } from 'shared';
-
-
+import { SKINS } from '../skins';
+import type { SkinDef } from '../skins';
 
 export class Renderer {
     private ctx: CanvasRenderingContext2D;
     private canvas: HTMLCanvasElement;
     private width: number = 0;
     private height: number = 0;
+    private skinCanvasCache: Map<string, HTMLCanvasElement> = new Map();
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -15,8 +16,38 @@ export class Renderer {
         if (!context) throw new Error('Could not get 2d context');
         this.ctx = context;
         
+        // Preload Skins (Generate Canvases)
+        SKINS.forEach(skin => {
+            if (skin.id !== 'none') {
+                const sCanvas = this.createSkinCanvas(skin);
+                this.skinCanvasCache.set(skin.id, sCanvas);
+                skin.canvas = sCanvas; // Also cache on object for easier UI access
+            }
+        });
+
         this.resize();
         window.addEventListener('resize', () => this.resize());
+    }
+
+    private createSkinCanvas(skin: SkinDef): HTMLCanvasElement {
+        const c = document.createElement('canvas');
+        c.width = skin.width;
+        c.height = skin.height;
+        const ctx = c.getContext('2d');
+        if (!ctx) return c;
+
+        for (let y = 0; y < skin.height; y++) {
+            const row = skin.pixels[y] || '';
+            for (let x = 0; x < skin.width; x++) {
+                const char = row[x] || '.';
+                const color = skin.palette[char];
+                if (color && color !== 'transparent') {
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+        return c;
     }
 
     resize() {
@@ -135,8 +166,40 @@ export class Renderer {
         }
 
         this.ctx.arc(entity.position.x, entity.position.y, entity.radius, 0, Math.PI * 2);
+        
         this.ctx.fillStyle = entity.color;
         this.ctx.fill();
+
+        // Skin
+        if (entity.skin && entity.skin !== 'none') {
+            const skinCanvas = this.skinCanvasCache.get(entity.skin);
+            if (skinCanvas) {
+                // Determine rotation:
+                // Viruses spin? 
+                // Players don't spin usually.
+                
+                this.ctx.save();
+                this.ctx.beginPath(); 
+                this.ctx.arc(entity.position.x, entity.position.y, entity.radius, 0, Math.PI * 2);
+                this.ctx.clip();
+                
+                const size = entity.radius * 2;
+                // Draw image centered at entity position
+                // Check if skinCanvas is valid size
+                if (skinCanvas.width > 0) {
+                     this.ctx.drawImage(skinCanvas, 
+                        entity.position.x - entity.radius, 
+                        entity.position.y - entity.radius, 
+                        size, size
+                    );
+                } else {
+                    console.warn(`Skin canvas for ${entity.skin} has 0 width`); // Debug
+                }
+                this.ctx.restore();
+            } else {
+                 // console.warn(`Missing skin canvas for: ${entity.skin}`);
+            }
+        }
         
         if (entity.type === EntityType.Player) {
              this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';

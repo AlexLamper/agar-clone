@@ -7,6 +7,7 @@ export class Cell implements CellEntity {
     public position: Vector2;
     public radius: number;
     public color: string;
+    public skin?: string;
     public playerId: string;
     public mass: number;
     
@@ -14,12 +15,13 @@ export class Cell implements CellEntity {
     public target: Vector2 = { x: 0, y: 0 };
     public createdAt: number;
 
-    constructor(playerId: string, position: Vector2, mass: number, color: string) {
+    constructor(playerId: string, position: Vector2, mass: number, color: string, skin?: string) {
         this.id = uuidv4();
         this.playerId = playerId;
         this.position = position;
         this.mass = mass;
         this.color = color;
+        this.skin = skin;
         this.radius = Math.sqrt(this.mass * 100 / Math.PI); // Radius from mass
         this.createdAt = Date.now();
     }

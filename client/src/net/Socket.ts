@@ -25,12 +25,13 @@ export class Socket {
         };
     }
 
-    sendJoin(name: string, color?: string) {
+    sendJoin(name: string, color?: string, skin?: string) {
         console.log('Sending join:', name);
         const msg: ClientMessage = {
             type: MessageType.JOIN,
             name,
-            color
+            color,
+            skin
         };
         this.send(msg);
     }
