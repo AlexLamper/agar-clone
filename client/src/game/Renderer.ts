@@ -10,11 +10,16 @@ export class Renderer {
     private height: number = 0;
     private skinCanvasCache: Map<string, HTMLCanvasElement> = new Map();
 
+    private virusImage: HTMLImageElement = new Image();
+    private gridPattern: CanvasPattern | null = null;
+
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         const context = canvas.getContext('2d');
         if (!context) throw new Error('Could not get 2d context');
         this.ctx = context;
+
+        this.virusImage.src = '/virus.png';
         
         // Preload Skins (Generate Canvases)
         SKINS.forEach(skin => {
@@ -25,8 +30,31 @@ export class Renderer {
             }
         });
 
+        this.createGridPattern();
+
         this.resize();
         window.addEventListener('resize', () => this.resize());
+    }
+
+    public createGridPattern() {
+        const step = 50;
+        const c = document.createElement('canvas');
+        c.width = step;
+        c.height = step;
+        const ctx = c.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.strokeStyle = '#bfbfbf';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Draw top and left edges
+        ctx.moveTo(0, 0);
+        ctx.lineTo(step, 0); // Top
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, step); // Left
+        ctx.stroke();
+
+        this.gridPattern = this.ctx.createPattern(c, 'repeat');
     }
 
     public createSkinCanvas(skin: SkinDef): HTMLCanvasElement {
@@ -102,7 +130,7 @@ export class Renderer {
         this.ctx.translate(-camX, -camY);
 
         // Draw Grid
-        this.drawGrid(worldSize);
+        this.drawGrid(camX, camY, zoom);
 
         // Draw Entities
         // Sort by radius ascending so smaller cells (on top of larger?) or larger on top?
@@ -127,56 +155,38 @@ export class Renderer {
         this.drawScore(me.score);
     }
 
-    private drawGrid(worldSize: number) {
-        this.ctx.strokeStyle = '#cccccc'; // Darker grid lines
-        this.ctx.lineWidth = 1;
-        this.ctx.beginPath();
-        
-        // Draw grid lines
-        const step = 50;
-        
-        // Draw borders
-        this.ctx.strokeStyle = '#333';
-        this.ctx.strokeRect(0, 0, worldSize, worldSize);
-        
-        this.ctx.strokeStyle = '#bfbfbf'; // Inner grid more visible
-        for (let x = 0; x <= worldSize; x += step) {
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, worldSize);
+    private drawGrid(camX: number, camY: number, zoom: number) {
+        // Optimized grid drawing using pattern
+        if (this.gridPattern) {
+            this.ctx.fillStyle = this.gridPattern;
+            
+            // Calculate visible area to draw grid everywhere (infinite feel)
+            // Visible dimensions in world units
+            const viewW = this.width / zoom;
+            const viewH = this.height / zoom;
+            
+            // Top-left of the visible area in world coordinates
+            const left = camX - viewW / 2;
+            const top = camY - viewH / 2;
+            
+            // Add a buffer to ensure we don't see edges
+            const buffer = 500; 
+
+            this.ctx.fillRect(left - buffer, top - buffer, viewW + buffer * 2, viewH + buffer * 2);
         }
-        for (let y = 0; y <= worldSize; y += step) {
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(worldSize, y);
-        }
-        this.ctx.stroke();
+
+        // Border is now invisible (background continues), but collision exists server-side.
     }
 
 
     private drawEntity(entity: BaseEntity, players: Player[]) {
-        this.ctx.beginPath();
-        
         if (entity.type === EntityType.Virus) {
-             const spikes = 20;
-             const outerRadius = entity.radius;
-             const innerRadius = entity.radius * 0.9;
-             
-             for (let i = 0; i < spikes * 2; i++) {
-                 const r = (i % 2 === 0) ? outerRadius : innerRadius;
-                 const a = (Math.PI * 2 * i) / (spikes * 2);
-                 const x = entity.position.x + Math.cos(a) * r;
-                 const y = entity.position.y + Math.sin(a) * r;
-                 if (i === 0) this.ctx.moveTo(x, y);
-                 else this.ctx.lineTo(x, y);
-             }
-             this.ctx.closePath();
-             this.ctx.fillStyle = '#33FF33';
-             this.ctx.fill();
-             this.ctx.strokeStyle = '#22AA22';
-             this.ctx.lineWidth = 3;
-             this.ctx.stroke();
+             const diameter = entity.radius * 2;
+             this.ctx.drawImage(this.virusImage, entity.position.x - entity.radius, entity.position.y - entity.radius, diameter, diameter);
              return;
         }
 
+        this.ctx.beginPath();
         this.ctx.arc(entity.position.x, entity.position.y, entity.radius, 0, Math.PI * 2);
         
         this.ctx.fillStyle = entity.color;
@@ -186,41 +196,23 @@ export class Renderer {
         if (entity.skin && entity.skin !== 'none') {
             const skinCanvas = this.skinCanvasCache.get(entity.skin);
             if (skinCanvas) {
-                // Determine rotation:
-                // Viruses spin? 
-                // Players don't spin usually.
-                
                 this.ctx.save();
-                this.ctx.beginPath(); 
+                this.ctx.beginPath();
                 this.ctx.arc(entity.position.x, entity.position.y, entity.radius, 0, Math.PI * 2);
                 this.ctx.clip();
                 
-                // Solid Background for skin
-                this.ctx.fillStyle = '#000000'; // Or entity.color? 
-                // User asked for "Border shouldn't be transparent... make it solid". 
-                // This implies the INSIDE of the border. If the skin has transparency, we want it filled?
-                // Or maybe they mean the stroke line itself?
-                // "The border shouldn't be transparent (of the blob/player/skin), make it solid."
-                // Currently EntityType.Player logic draws stroke.
-                // If I fill here, any holes in pixel art become black (or entity color).
-                this.ctx.fillStyle = entity.color; 
+                this.ctx.fillStyle = entity.color;
                 this.ctx.fill();
 
                 const size = entity.radius * 2;
-                // Draw image centered at entity position
-                // Check if skinCanvas is valid size
                 if (skinCanvas.width > 0) {
                      this.ctx.drawImage(skinCanvas, 
                         entity.position.x - entity.radius, 
                         entity.position.y - entity.radius, 
                         size, size
                     );
-                } else {
-                    console.warn(`Skin canvas for ${entity.skin} has 0 width`); // Debug
                 }
                 this.ctx.restore();
-            } else {
-                 // console.warn(`Missing skin canvas for: ${entity.skin}`);
             }
         }
         

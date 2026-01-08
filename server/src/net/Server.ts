@@ -69,12 +69,21 @@ export class GameServer {
                 const player = new Player(playerId, msg.name, ws, msg.skin);
                 this.world.addPlayer(player, msg.color);
                 
+                // Calculate initial visible entities
+                let scale = 1;
+                if (player.score > 0) {
+                    scale = Math.max(1, Math.pow(player.score, 0.1));
+                }
+                const width = 1920 * scale;
+                const height = 1080 * scale;
+                const visibleEntities = this.world.getVisibleEntities(player, width, height);
+
                 // Send Init
                 const initMsg: InitMessage = {
                     type: MessageType.INIT,
                     worldSize: this.world.width,
                     playerId: playerId,
-                    entities: this.world.entities,
+                    entities: visibleEntities,
                     players: Array.from(this.world.players.values()).map(p => ({
                         id: p.id,
                         name: p.name,
