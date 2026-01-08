@@ -17,6 +17,10 @@ export interface JoinMessage {
     name: string;
     color?: string;
     skin?: string;
+    // Persist stats
+    savedLevel?: number;
+    savedXp?: number;
+    savedCoins?: number;
 }
 
 export interface ClaimHourlyMessage {

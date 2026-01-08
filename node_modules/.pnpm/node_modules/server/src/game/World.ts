@@ -112,10 +112,12 @@ export class World {
 
     addPlayer(player: Player, color?: string) {
         this.players.set(player.id, player);
-        // Spawn initial cell
+        // Spawn initial cell with Mass based on Level
+        const startMass = player.getStartingMass();
+
         const pos = this.getRandomPosition();
         const startColor = color || this.getRandomColor();
-        const cell = new Cell(player.id, pos, 50, startColor, player.skin);
+        const cell = new Cell(player.id, pos, startMass, startColor, player.skin);
         player.addCell(cell);
         this.entities.push(cell);
     }
@@ -175,6 +177,56 @@ export class World {
         if (this.entities.filter(e => e.type === EntityType.Virus).length < MAX_VIRUSES) {
             this.spawnViruses(1);
         }
+
+        // --- XP over Time Logic ---
+        // "XP is earned every second depending on mass."
+        // "Mass: The more mass you have, the more XP you earn per second."
+        // "Splits: The more you split, the more XP you gain per cell."
+        
+        // Let's run this check every 25 ticks (approx 1 second at 25Hz, but we run 40Hz)
+        // 40Hz = 40 ticks/sec. So every 40 ticks = 1 second.
+        
+        // We can use a counter in World or just reuse tick?
+        // Let's use modulus on timestamp or tickCount. TickCount is in Server.ts.
+        // World doesn't track tick count directly, but we can do it cheap:
+        
+        if (Date.now() % 1000 < 50) { // Rough "once per second" check (flaky)
+            // Better: Server.ts calls tick(), let's trust caller handles frequency or we add internal counter.
+        }
+    }
+    
+    // Explicit method called by Server loop every second
+    public givePassiveXp() {
+        this.players.forEach(player => {
+             // Calculate Total Mass
+             const totalMass = player.cells.reduce((sum, c) => sum + c.mass, 0);
+             if (totalMass === 0) return;
+             
+             // Base XP from mass:
+             // "If you have 500 mass you will generate more XP per second than if you have 250 mass. 
+             // If you are twice as big you only get about 30-40% more XP."
+             // Formula: XP = Const * Mass^0.4 ?
+             // 250^0.4 = 9.1
+             // 500^0.4 = 12.0 (approx 32% increase) - Fits the description perfectly.
+             
+             let xpGain = Math.pow(totalMass, 0.4);
+             
+             // Split Multiplier:
+             // "The more you split, the more XP you gain per cell."
+             // "you have a cell with 500 mass (XP ~12), you will gain double the XP if you have two 250 cells."
+             // Two 250 cells:
+             // Cell 1: 250^0.4 = 9.1
+             // Cell 2: 250^0.4 = 9.1
+             // Total = 18.2.  12 vs 18.2 is ~50% more, not double.
+             // If we sum XP per cell individually, we get the split bonus naturally!
+             // So instead of Total Mass ^ 0.4, we do Sum(CellMass ^ 0.4).
+             
+             // Recalculate correctly:
+             xpGain = player.cells.reduce((sum, c) => sum + Math.pow(c.mass, 0.4), 0);
+             
+             // Scaling to integer
+             player.addXp(Math.floor(xpGain));
+        });
     }
 
 

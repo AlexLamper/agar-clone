@@ -1,5 +1,5 @@
 import { MessageType } from 'shared';
-import type { ClientMessage, ServerMessage, Vector2 } from 'shared';
+import type { ClientMessage, ServerMessage, Vector2, JoinMessage } from 'shared';
 
 type MessageHandler = (msg: ServerMessage) => void;
 
@@ -25,13 +25,16 @@ export class Socket {
         };
     }
 
-    sendJoin(name: string, color?: string, skin?: string) {
+    sendJoin(name: string, color?: string, skin?: string, savedLevel?: number, savedXp?: number, savedCoins?: number) {
         console.log('Sending join:', name);
-        const msg: ClientMessage = {
+        const msg: JoinMessage = {
             type: MessageType.JOIN,
             name,
             color,
-            skin
+            skin,
+            savedLevel,
+            savedXp,
+            savedCoins
         };
         this.send(msg);
     }

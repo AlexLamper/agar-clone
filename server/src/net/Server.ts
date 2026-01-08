@@ -83,7 +83,15 @@ export class GameServer {
         // console.log('Processing message:', msg.type);
         switch (msg.type) {
             case MessageType.JOIN:
+                console.log('Player Joining with stats:', { level: msg.savedLevel, xp: msg.savedXp, coins: msg.savedCoins });
                 const player = new Player(playerId, msg.name, ws, msg.skin);
+                
+                // Restore saved stats if provided (Client-Side Storage "Security")
+                // In a real app we'd verify a token with DB.
+                if (msg.savedLevel) player.level = msg.savedLevel;
+                if (msg.savedXp) player.xp = msg.savedXp;
+                if (msg.savedCoins) player.coins = msg.savedCoins;
+
                 this.world.addPlayer(player, msg.color);
                 
                 // Calculate initial visible entities
@@ -141,6 +149,11 @@ export class GameServer {
         this.broadcastUpdate();
         
         this.tickCount++;
+        
+        if (this.tickCount % this.TICK_RATE === 0) { // Every 1 second (40 ticks)
+             this.world.givePassiveXp();
+        }
+
         if (this.tickCount % 20 === 0) { // Every 0.5s
              this.broadcastLeaderboard();
         }

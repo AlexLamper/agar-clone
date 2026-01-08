@@ -1,7 +1,6 @@
 Later: 
 - different game modes
 - Coin system 
-- Skins for your player/blob
 - settings
 - Leaderboard
 - Shop

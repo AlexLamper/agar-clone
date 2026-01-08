@@ -249,8 +249,8 @@ export class Renderer {
         const width = 250;
         // Dynamic height based on entries, with min height and extra padding
         const lineHeight = 30;
-        const headerHeight = 50; // Increased header space
-        const bottomPadding = 20; // Extra space at bottom
+        const headerHeight = 60; // Increased header space
+        const bottomPadding = 10; // Reduced extra space at bottom
         const contentHeight = Math.max(5, entries.length) * lineHeight;
         const height = headerHeight + contentHeight + bottomPadding;
         
@@ -262,15 +262,15 @@ export class Renderer {
         this.ctx.fillRect(x, y, width, height);
         
         this.ctx.fillStyle = 'white';
-        this.ctx.font = 'bold 24px Nunito, sans-serif'; // Slightly bigger header
+        this.ctx.font = 'bold 30px Nunito, sans-serif'; // Big Bold Letters
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('Leaderboard', x + width/2, y + 35);
+        this.ctx.fillText('Leaderboard', x + width/2, y + 40);
         
         this.ctx.font = '18px Nunito, sans-serif';
         this.ctx.textAlign = 'left';
         
         entries.forEach((entry, i) => {
-            const rowY = y + headerHeight + 10 + i * lineHeight; // +10 initial gap
+            const rowY = y + headerHeight + 10 + i * lineHeight; // +10 initial gap (moved down)
             this.ctx.fillText(`${i + 1}.`, x + 20, rowY);
             
             // Name ellipsis

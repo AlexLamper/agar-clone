@@ -3,6 +3,7 @@ import { Cell } from './Cell.js';
 import { WebSocket } from 'ws';
 import { World } from './World.js';
 import { EjectedMass } from './EjectedMass.js';
+import { LEVELS } from 'shared';
 
 export class Player implements PlayerState {
     public id: string;
@@ -31,19 +32,37 @@ export class Player implements PlayerState {
     }
 
     private checkLevelUp() {
-        // Simple formula: Required = Level * 1000
-        const required = this.level * 1000;
-        if (this.xp >= required) {
+        let required = this.getNextLevelXp();
+        
+        while (this.xp >= required && this.level < 100) {
             this.xp -= required;
             this.level++;
-            // Reward: 100 coins per level
+            // Reward: 100 coins per level (kept from previous logic for fun)
             this.coins += 100;
-             this.checkLevelUp(); // Check again in case of massive XP gain
+            required = this.getNextLevelXp();
+        }
+        
+        // Cap level 100
+        if (this.level >= 100) {
+            this.xp = 0;
         }
     }
 
     getNextLevelXp(): number {
-        return this.level * 1000;
+        // Look up table
+        // Levels are 1-based, array 0-based. Index = Level - 1
+        const levelData = LEVELS[this.level - 1]; // Current level data
+        return levelData ? levelData.xp : Infinity;
+    }
+    
+    getStartingMass(): number {
+         const levelData = LEVELS[this.level - 1];
+         // Logic for Facebook boost not implemented fully (authentication), 
+         // but assuming logged in / bonus capable:
+         // Returning base mass from table.
+         // +5 mass boost is effectively handled by levels table if we want?
+         // User provided: Level 1 -> 10 mass.
+         return levelData ? levelData.mass : 10;
     }
 
     addCell(cell: Cell) {
@@ -94,6 +113,14 @@ export class Player implements PlayerState {
             // Boost - slightly stronger
             newCell.velocity = { x: dirX * 40, y: dirY * 40 };
             
+            // XP for Splitting:
+            // "The more you split, the more XP you gain per cell. 
+            // Let us say for example you have a cell with 500 mass, you will gain double the XP if you have two 250 cells."
+            // Formula idea: Gain XP proportional to the mass of the split cell?
+            // Assuming simplified: +XP equal to mass of new cell? Or a fraction.
+            // Let's give 1 XP per 10 mass split.
+            this.addXp(Math.max(1, Math.floor(newMass / 10)));
+
             this.addCell(newCell);
             world.entities.push(newCell);
             cellsAdded++;

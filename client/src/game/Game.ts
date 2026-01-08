@@ -1,5 +1,6 @@
 import { MessageType, EntityType } from 'shared';
 import type { BaseEntity, ServerMessage, Player } from 'shared';
+import { LEVELS } from 'shared';
 import { Input } from './Input';
 import { Renderer } from './Renderer';
 import { Socket } from '../net/Socket';
@@ -88,6 +89,31 @@ export class Game {
         const input = document.getElementById('playerName') as HTMLInputElement;
         const colorInput = document.getElementById('playerColor') as HTMLInputElement;
         const overlay = document.getElementById('ui-overlay');
+
+        // Restore Stats UI immediately from persistence
+        const savedLevel = localStorage.getItem('agar_level');
+        const savedCoins = localStorage.getItem('agar_coins');
+        const savedXp = localStorage.getItem('agar_xp');
+        
+        const menuCoins = document.getElementById('menuCoins');
+        const menuLevel = document.getElementById('menuLevel');
+        const menuXp = document.getElementById('menuXp');
+        const menuXpBar = document.getElementById('menuXpBar');
+        const menuXpText = document.getElementById('menuXpText');
+
+        if (menuCoins) menuCoins.innerText = savedCoins || '0';
+        if (menuLevel) menuLevel.innerText = savedLevel || '1';
+        if (menuXp) menuXp.innerText = savedXp || '0';
+        
+        if (menuXpBar && menuXpText && savedLevel && savedXp) {
+             const lvl = parseInt(savedLevel);
+             const xp = parseInt(savedXp);
+             const nextXp = LEVELS[lvl - 1] ? LEVELS[lvl-1].xp : 1000;
+             const pct = Math.min(100, Math.max(0, (xp / nextXp) * 100));
+             menuXpBar.style.width = `${pct}%`;
+             menuXpText.innerText = `${xp}/${nextXp} XP`;
+        }
+
 
         // Load saved preferences
         if (input) {
@@ -252,7 +278,22 @@ export class Game {
 
              const skinId = this.selectedSkin.id === 'none' ? undefined : this.selectedSkin.id;
              console.log("Joing with skin:", skinId); // Debug
-             this.socket.sendJoin(name, undefined, skinId);
+             
+             // Restore stats from storage
+             const savedLevel = localStorage.getItem('agar_level');
+             const savedXp = localStorage.getItem('agar_xp');
+             const savedCoins = localStorage.getItem('agar_coins');
+
+             console.log('Restoring Stats from Storage:', { savedLevel, savedXp, savedCoins });
+
+             this.socket.sendJoin(
+                 name, 
+                 undefined, 
+                 skinId, 
+                 savedLevel ? parseInt(savedLevel) : 1, 
+                 savedXp ? parseInt(savedXp) : 0, 
+                 savedCoins ? parseInt(savedCoins) : 0
+            );
 
              if (overlay) overlay.style.display = 'none';
              this.hasJoined = true;
@@ -411,6 +452,7 @@ export class Game {
     }
 
     private handleStats(msg: any) { // StatsMessage
+         console.log('Received Stats:', msg); // Debug
          const menuCoins = document.getElementById('menuCoins');
          const menuLevel = document.getElementById('menuLevel');
          const menuXp = document.getElementById('menuXp');
@@ -424,6 +466,18 @@ export class Game {
          if (menuCoins) menuCoins.innerText = msg.coins != null ? msg.coins.toString() : '0';
          if (menuLevel) menuLevel.innerText = msg.level != null ? msg.level.toString() : '1';
          if (menuXp) menuXp.innerText = msg.xp != null ? msg.xp.toString() : '0';
+
+         // Save stats locally on update (Use truthy check carefully: 0 is falsy but valid)
+         // Level is 1+, ok. XP and Coins can be 0.
+         if (msg.level != null) localStorage.setItem('agar_level', msg.level.toString());
+         if (msg.xp != null) localStorage.setItem('agar_xp', msg.xp.toString());
+         if (msg.coins != null) localStorage.setItem('agar_coins', msg.coins.toString());
+
+         console.log('Saved Stats to Storage:', { 
+            level: localStorage.getItem('agar_level'), 
+            xp: localStorage.getItem('agar_xp'),
+            coins: localStorage.getItem('agar_coins')
+         });
 
          if (menuXpBar && menuXpText) {
              const xp = msg.xp || 0;
