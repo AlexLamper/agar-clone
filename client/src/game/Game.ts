@@ -277,14 +277,11 @@ export class Game {
              // So we just don't send color at all.
 
              const skinId = this.selectedSkin.id === 'none' ? undefined : this.selectedSkin.id;
-             console.log("Joing with skin:", skinId); // Debug
              
              // Restore stats from storage
              const savedLevel = localStorage.getItem('agar_level');
              const savedXp = localStorage.getItem('agar_xp');
              const savedCoins = localStorage.getItem('agar_coins');
-
-             console.log('Restoring Stats from Storage:', { savedLevel, savedXp, savedCoins });
 
              this.socket.sendJoin(
                  name, 
@@ -385,10 +382,39 @@ export class Game {
         }
     }
 
-    private showGameOver() {
+    private showGameOver(stats?: any) {
         const overlay = document.getElementById('game-over-overlay');
-        const scoreSpan = document.getElementById('finalScore');
-        if (scoreSpan && this.me) scoreSpan.innerText = this.me.score.toString();
+        
+        if (stats) {
+            const foodEl = document.getElementById('stat-food');
+            const timeEl = document.getElementById('stat-time');
+            const cellsEl = document.getElementById('stat-cells');
+            const massEl = document.getElementById('stat-mass');
+            const lbEl = document.getElementById('stat-lb-time');
+            const topEl = document.getElementById('stat-top');
+
+            if (foodEl) foodEl.innerText = stats.foodEaten.toString();
+            if (cellsEl) cellsEl.innerText = stats.cellsEaten.toString();
+            if (massEl) massEl.innerText = stats.highestMass.toString();
+            
+            if (timeEl) {
+                const s = Math.floor(stats.timeAlive || 0);
+                const min = Math.floor(s / 60);
+                const sec = s % 60;
+                timeEl.innerText = `${min}:${sec.toString().padStart(2, '0')}`;
+            }
+
+            if (lbEl) {
+                const s = Math.floor(stats.leaderboardTime || 0);
+                const min = Math.floor(s / 60);
+                const sec = s % 60;
+                lbEl.innerText = `${min}:${sec.toString().padStart(2, '0')}`;
+            }
+            
+            if (topEl) {
+                topEl.innerText = (stats.topPosition && stats.topPosition > 0 && stats.topPosition < 1000) ? stats.topPosition.toString() : '-';
+            }
+        }
         
         if (overlay) overlay.style.display = 'flex';
         this.isRunning = false; 
@@ -443,7 +469,7 @@ export class Game {
                 this.leaderboard = msg.entries;
                 break;
             case MessageType.GAME_OVER:
-                this.showGameOver();
+                this.showGameOver((msg as any).stats);
                 break;
             case MessageType.STATS:
                 this.handleStats(msg as any);
@@ -452,7 +478,6 @@ export class Game {
     }
 
     private handleStats(msg: any) { // StatsMessage
-         console.log('Received Stats:', msg); // Debug
          const menuCoins = document.getElementById('menuCoins');
          const menuLevel = document.getElementById('menuLevel');
          const menuXp = document.getElementById('menuXp');
@@ -472,12 +497,6 @@ export class Game {
          if (msg.level != null) localStorage.setItem('agar_level', msg.level.toString());
          if (msg.xp != null) localStorage.setItem('agar_xp', msg.xp.toString());
          if (msg.coins != null) localStorage.setItem('agar_coins', msg.coins.toString());
-
-         console.log('Saved Stats to Storage:', { 
-            level: localStorage.getItem('agar_level'), 
-            xp: localStorage.getItem('agar_xp'),
-            coins: localStorage.getItem('agar_coins')
-         });
 
          if (menuXpBar && menuXpText) {
              const xp = msg.xp || 0;

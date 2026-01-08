@@ -101,23 +101,32 @@
             
             <!-- Left Column Items -->
                 <div class="panel profile-panel">
-                    <div class="profile-header">
-                        <div class="avatar-box"></div>
-                        <div class="profile-info">
-                            <div class="resources">
-                                <div class="res-row coin">
-                                    <span class="icon">💰</span> <span id="menuCoins">0</span> <span class="plus">+</span>
-                                </div>
-                                <div class="res-row dna">
-                                    <span class="icon">⭐</span> Lvl <span id="menuLevel">1</span>
-                                    <span style="font-size:10px; color:#aaa; margin-left:5px;">(<span id="menuXp">0</span> xp)</span>
+                    <div class="profile-content">
+                        <div class="profile-left">
+                            <div class="avatar-box"></div>
+                            <div class="profile-details">
+                                <div class="player-name" id="menuPlayerName">Guest</div>
+                                <div class="resources">
+                                    <div class="res-row coin">
+                                        <span class="icon">💰</span> <span id="menuCoins">0</span> <span class="plus">+</span>
+                                    </div>
+                                    <div class="res-row dna">
+                                        <span class="icon">⭐</span> Lvl <span id="menuLevel">1</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="profile-right">
+                             <div class="boost-item">
+                                 <img src="/xp-boost.png" alt="XP Boost" />
+                             </div>
+                             <div class="boost-item">
+                                 <img src="/starting-mass-boost.png" alt="Mass Boost" />
+                             </div>
+                        </div>
                     </div>
-                    <div class="player-name" id="menuPlayerName">Guest</div>
                     <div class="xp-bar-container">
-                        <div class="xp-bar" id="menuXpBar" style="width: 0%"></div>
+                        <div class="xp-bar" id="menuXpBar" style="width: 0%; background-color: #55c706;"></div>
                         <div class="xp-text" id="menuXpText">0/1000 XP</div>
                     </div>
                 </div>
@@ -263,12 +272,57 @@
 
     <!-- Game Over Overlay -->
     <div id="game-over-overlay" class="overlay-container" style="display: none;">
-         <div class="panel play-panel" style="width: 400px; margin: auto;">
-             <h2 style="font-family: 'Nunito', sans-serif; text-align: center;">Game Over</h2>
-             <div id="final-stats" style="margin: 20px 0; text-align: center; color: #666; font-family: 'Nunito', sans-serif;">
-                 Score: <span id="finalScore" style="font-weight: bold; color: #333; font-size: 24px;">0</span>
+         <div class="panel result-card">
+             <div class="result-header">
+                 <h2>Match Results</h2>
              </div>
-             <button id="restartBtn" class="btn-play">Play Again</button>
+             
+             <div class="result-body">
+                 <!-- Stats Grid: 2 Columns, 3 Rows each (Visual layout) -->
+                 <div class="stats-container">
+                     <!-- Left Column -->
+                     <div class="stats-column">
+                         <div class="stat-item">
+                             <div class="stat-label">food eaten</div>
+                             <div class="stat-value" id="stat-food">-</div>
+                         </div>
+                         <div class="stat-item">
+                             <div class="stat-label">time alive</div>
+                             <div class="stat-value" id="stat-time">-</div>
+                         </div>
+                         <div class="stat-item">
+                            <div class="stat-label">cells eaten</div>
+                            <div class="stat-value" id="stat-cells">-</div>
+                        </div>
+                     </div>
+
+                     <!-- Right Column -->
+                     <div class="stats-column">
+                        <div class="stat-item">
+                            <div class="stat-label">highest mass</div>
+                            <div class="stat-value" id="stat-mass">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">leaderboard time</div>
+                            <div class="stat-value" id="stat-lb-time">0:00</div>
+                        </div>
+                        <div class="stat-item">
+                           <div class="stat-label">top position</div>
+                           <div class="stat-value" id="stat-top">-</div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div class="results-divider"></div>
+
+                 <div class="share-buttons">
+                     <button class="btn-share red">Share</button>
+                     <button class="btn-share blue">Share</button>
+                 </div>
+                 
+                 <button id="restartBtn" class="btn-continue">Continue</button>
+
+             </div>
          </div>
     </div>
 

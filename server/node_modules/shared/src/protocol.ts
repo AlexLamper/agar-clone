@@ -71,6 +71,14 @@ export interface LeaderboardMessage {
 export interface GameOverMessage {
     type: MessageType.GAME_OVER;
     reason: string;
+    stats?: {
+        foodEaten: number;
+        timeAlive: number; // seconds
+        cellsEaten: number;
+        highestMass: number;
+        leaderboardTime: number; // seconds
+        topPosition: number;
+    }
 }
 
 export type ClientMessage = JoinMessage | InputMessage;

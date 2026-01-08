@@ -112,6 +112,15 @@ export class World {
 
     addPlayer(player: Player, color?: string) {
         this.players.set(player.id, player);
+        
+        // Reset Stats
+        player.spawnTime = Date.now();
+        player.foodEaten = 0;
+        player.cellsEaten = 0;
+        player.highestMass = 0;
+        player.leaderboardTime = 0;
+        player.topPosition = 1000; // Arbitrary high number
+
         // Spawn initial cell with Mass based on Level
         const startMass = player.getStartingMass();
 
@@ -119,6 +128,10 @@ export class World {
         const startColor = color || this.getRandomColor();
         const cell = new Cell(player.id, pos, startMass, startColor, player.skin);
         player.addCell(cell);
+        
+        // Also set initial mass as highest
+        player.highestMass = Math.max(player.highestMass, player.score);
+        
         this.entities.push(cell);
     }
 
@@ -347,6 +360,8 @@ export class World {
                             cell.setMass(cell.mass + 1);
                             player.updateScore();
                             player.addXp(1);
+                            player.foodEaten++; // Track stats
+                            
                             this.removeEntity(other.id);
                             removedEntityIds.add(other.id);
                          }
@@ -421,6 +436,8 @@ export class World {
                             cell.setMass(cell.mass + otherCell.mass);
                             player.updateScore();
                             player.addXp(Math.floor(otherCell.mass));
+                            player.cellsEaten++; // Track stats
+
                             const victim = this.players.get(otherCell.playerId);
                             if (victim) victim.removeCell(otherCell.id);
                             this.removeEntity(otherCell.id);

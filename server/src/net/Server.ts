@@ -83,7 +83,6 @@ export class GameServer {
         // console.log('Processing message:', msg.type);
         switch (msg.type) {
             case MessageType.JOIN:
-                console.log('Player Joining with stats:', { level: msg.savedLevel, xp: msg.savedXp, coins: msg.savedCoins });
                 const player = new Player(playerId, msg.name, ws, msg.skin);
                 
                 // Restore saved stats if provided (Client-Side Storage "Security")
@@ -194,7 +193,20 @@ export class GameServer {
             if (player.cells.length === 0) {
                 // Dead
                 if (player.socket.readyState === WebSocket.OPEN) {
-                    const msg = { type: MessageType.GAME_OVER };
+                    const timeAlive = (Date.now() - player.spawnTime) / 1000;
+                    
+                    const msg: any = { 
+                        type: MessageType.GAME_OVER,
+                        reason: 'Eaten',
+                        stats: {
+                            foodEaten: player.foodEaten,
+                            timeAlive: timeAlive,
+                            cellsEaten: player.cellsEaten,
+                            highestMass: Math.floor(player.highestMass), // Ensure integer
+                            leaderboardTime: player.leaderboardTime,
+                            topPosition: player.topPosition === 1000 ? 0 : player.topPosition // 0 if never ranked (which is unlikely if they spawn)
+                        }
+                    };
                     player.socket.send(JSON.stringify(msg));
                 }
                 deadPlayers.push(player.id);
@@ -230,10 +242,32 @@ export class GameServer {
     }
 
     private broadcastLeaderboard() {
+        // Sort players first to update stats
+        const relevantPlayers = Array.from(this.world.players.values());
+        relevantPlayers.sort((a, b) => b.score - a.score);
+
+        // Update Stats
+        relevantPlayers.forEach((p, index) => {
+            const rank = index + 1;
+            if (p.topPosition > rank) {
+                p.topPosition = rank;
+            }
+            
+            // If top 10, add to leaderboard time
+            if (rank <= 10) {
+                // Broadcast runs every 0.5s (20 ticks)
+                p.leaderboardTime += 0.5;
+            }
+            
+            // Update Highest Mass (Check here too just in case)
+            if (p.score > p.highestMass) {
+                p.highestMass = p.score;
+            }
+        });
+
         const leaderboardMsg: LeaderboardMessage = {
             type: MessageType.LEADERBOARD,
-            entries: Array.from(this.world.players.values())
-                .sort((a, b) => b.score - a.score)
+            entries: relevantPlayers
                 .slice(0, 10)
                 .map(p => ({ name: p.name, score: p.score }))
         };

@@ -19,6 +19,14 @@ export class Player implements PlayerState {
     public coins: number = 0;
     public lastHourlyLine: number = 0;
 
+    // Match Stats
+    public spawnTime: number = 0;
+    public foodEaten: number = 0;
+    public cellsEaten: number = 0;
+    public highestMass: number = 0;
+    public leaderboardTime: number = 0;
+    public topPosition: number = 0;
+
     constructor(id: string, name: string, socket: WebSocket, skin?: string) {
         this.id = id;
         this.name = name;
