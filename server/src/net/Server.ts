@@ -12,6 +12,7 @@ import {
     ClaimHourlyMessage
 } from 'shared';
 import { v4 as uuidv4 } from 'uuid';
+import { BOT_NAMES } from '../game/botNames.js';
 
 export class GameServer {
     private wss: WebSocketServer;
@@ -27,9 +28,25 @@ export class GameServer {
 
         this.wss.on('connection', (ws) => this.handleConnection(ws));
         
-        // Add Bots
-        for (let i = 0; i < 10; i++) {
-             const bot = new Bot(uuidv4(), `Bot ${i+1}`, this.world);
+        // Add Bots with unique names
+        const usedNames = new Set<string>();
+        const availableNames = [...BOT_NAMES];
+        
+        // Shuffle available names
+        for (let i = availableNames.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableNames[i], availableNames[j]] = [availableNames[j], availableNames[i]];
+        }
+
+        for (let i = 0; i < 20; i++) { // Increased to 20 bots
+             let name = 'Bot ' + i;
+             if (availableNames.length > 0) {
+                 name = availableNames.pop()!;
+             } else {
+                 name = `Bot ${i+1}`;
+             }
+             
+             const bot = new Bot(uuidv4(), name, this.world);
              this.bots.push(bot);
              this.world.addPlayer(bot);
         }

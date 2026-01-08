@@ -48,7 +48,7 @@ canvas {
     color: #646464;
     background-color: #fff;
     padding: 8px 15px;
-    border-bottom-left-radius: 15px;
+    border-bottom-left-radius: 5px;
 }
 
 .top-links a {
