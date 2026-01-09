@@ -4,6 +4,8 @@
     "module": "ESNext",
     "strict": true,
     "declaration": true,
+    "verbatimModuleSyntax": false,
+    "erasableSyntaxOnly": false,
     "outDir": "dist"
   },
   "include": ["src"]
