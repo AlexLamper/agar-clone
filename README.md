@@ -3,7 +3,7 @@
 I tried vibecoding a clone of [Agar.io](https://agar.io/) as accurately as possible in terms of design, gameplay and mechanics. Players control a cell, consume food, and compete against others to grow larger and dominate the arena.
 I've intentinally left out authentication, leaderboard, and monetization features to prioritize the core gameplay and faithfully replicate the original design.
 
-Link to the clone I made: [Agar.io clone](https://agar.io/)
+Link to the clone I made: [Agar.io clone](https://agar.wtf/)
 
 ## Why?
 
