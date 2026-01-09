@@ -102,20 +102,39 @@
             <!-- Left Column Items -->
                 <div class="panel profile-panel">
                     <div class="profile-content">
-                        <div class="profile-left">
-                            <div class="avatar-box"></div>
-                            <div class="profile-details">
-                                <div class="player-name" id="menuPlayerName">Guest</div>
-                                <div class="resources">
-                                    <div class="res-row coin">
-                                        <span class="icon">💰</span> <span id="menuCoins">0</span> <span class="plus">+</span>
-                                    </div>
-                                    <div class="res-row dna">
-                                        <span class="icon">⭐</span> Lvl <span id="menuLevel">1</span>
+                        <div class="profile-main-section">
+                            <div class="profile-top-row">
+                                <div class="profile-left-column">
+                                    <div class="avatar-box"></div>
+                                    <div class="player-name" id="menuPlayerName">Guest</div>
+                                </div>
+                                <div class="profile-center-column">
+                                    <div class="resources">
+                                        <div class="res-bar dna-bar">
+                                            <span class="res-amount">42</span>
+                                            <img src="/bars/dna.png" class="res-icon" alt="DNA">
+                                            <div class="res-plus">+</div>
+                                        </div>
+                                        <div class="res-bar coin-bar">
+                                            <span class="res-amount" id="menuCoins">0</span>
+                                            <img src="/bars/coin.png" class="res-icon" alt="Coins">
+                                            <div class="res-plus">+</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div class="xp-bar-container">
+                                <div class="xp-bar" id="menuXpBar" style="width: 0%; background-color: #58c615;"></div>
+                                <div class="xp-text" id="menuXpText">0/1000 XP</div>
+                                <div class="xp-level-star">
+                                    <svg class="star-shape" viewBox="0 0 24 24" style="overflow: visible;">
+                                        <path fill="#f4b245" stroke="#c28e36" stroke-width="2" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                    <span class="level-text" id="menuLevel">1</span>
+                                </div>
+                            </div>
                         </div>
+                        
                         <div class="profile-right">
                              <div class="boost-item">
                                  <img src="/xp-boost.png" alt="XP Boost" />
@@ -124,10 +143,6 @@
                                  <img src="/starting-mass-boost.png" alt="Mass Boost" />
                              </div>
                         </div>
-                    </div>
-                    <div class="xp-bar-container">
-                        <div class="xp-bar" id="menuXpBar" style="width: 0%; background-color: #55c706;"></div>
-                        <div class="xp-text" id="menuXpText">0/1000 XP</div>
                     </div>
                 </div>
 

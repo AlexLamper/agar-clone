@@ -123,10 +123,32 @@ canvas {
     align-items: center;
 }
 
-.profile-left {
+.profile-main-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin-right: 25px; /* Increased spacing to reduce bar width */
+}
+
+.profile-top-row {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: flex-start; /* Align children to top */
+}
+
+.profile-left-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Left align to remove "spacing" on left */
+    margin-right: 15px;
+}
+
+.profile-center-column {
     display: flex;
     flex: 1;
-    align-items: center;
+    flex-direction: column;
+    justify-content: flex-start; /* Align to top */
+    align-items: stretch; /* Fill width */
 }
 
 .avatar-box {
@@ -134,47 +156,71 @@ canvas {
     height: 60px;
     background: #333;
     border-radius: 4px;
-    margin-right: 15px;
-}
-
-.profile-details {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
 
 .player-name {
-    font-weight: bold;
-    font-size: 18px;
-    margin-bottom: 5px;
-    color: #444;
+    font-weight: 800;
+    font-size: 20px; /* Bigger font as requested */
+    margin-top: 8px;
+    color: #2c2c2c; /* Darker */
+    text-align: left;
+    margin-left: 0;
 }
 
 .resources {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 10px;
+    width: 100%;
 }
 
-.res-row {
-    font-size: 12px;
+.res-bar {
     display: flex;
     align-items: center;
-    background: #eee;
-    border-radius: 3px;
-    padding: 3px 6px;
-    justify-content: space-between;
-    width: 120px;
+    justify-content: flex-end; /* Keep content to right */
+    background: #fff;
+    border: 2px solid #58c615; /* 2px thickness */
+    border-radius: 6px; /* Reduced rounding (few pixels) */
+    padding: 0; /* Remove padding to let button touch edges */
+    height: 25px; /* Bigger height */
+    box-sizing: border-box;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden; /* Clip children */
 }
 
-.res-row .icon { margin-right: 4px; }
-.res-row .plus { 
-    background: #55c706; 
+.res-amount {
+    font-weight: 700;
+    font-size: 13px; /* Slightly bigger */
+    color: #333;
+    margin-right: 6px;
+}
+
+.res-icon {
+    width: 16px; /* Slightly bigger */
+    height: 16px;
+    object-fit: contain;
+    margin-right: 4px; /* Spacing before button */
+}
+
+.res-plus { 
+    background: #58c615; 
     color: white; 
-    border-radius: 2px; 
-    padding: 0 4px; 
-    font-weight: bold;
+    width: 25px; /* Match height */
+    height: 100%; /* Full height */
+    border-radius: 0; /* No rounded corners on left */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px; /* Slightly bigger */
+    line-height: 1;
     cursor: pointer;
+    margin-left: 4px; 
+    margin: 0; /* Clear margins */
+}
+.res-plus:hover {
+    background: #4ab310;
 }
 
 .profile-right {
@@ -183,11 +229,11 @@ canvas {
     gap: 8px;
     justify-content: center;
     align-items: center;
-    margin-left: 10px;
+    /* margin-left removed as handled by parent flex gap or margin on left section */
 }
 
 .boost-item img {
-    height: 28px;
+    height: 50px;
     width: auto;
     object-fit: contain;
     display: block;
@@ -195,26 +241,64 @@ canvas {
 
 /* XP Bar */
 .xp-bar-container {
-    background: #444;
-    height: 24px;
+    background: #fff; /* White inside */
+    height: 30px; /* Slightly less height */
     position: relative;
     width: 100%;
+    border: 2px solid #58c615;
+    border-radius: 6px; /* Match bars */
+    /* overflow: hidden; Removed to let star overflow */
 }
 .xp-bar {
-    background: #55c706;
+    background: #58c615;
     height: 100%;
+    border-radius: 4px; /* Slight radius to fill properly */
 }
 .xp-text {
     position: absolute;
     top: 0;
     width: 100%;
-    text-align: center;
-    color: white;
-    font-size: 12px;
-    line-height: 24px;
-    mix-blend-mode: normal;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333; /* Gray/Black text */
+    font-size: 14px; /* Adjusted size */
+    font-weight: 800;
+    text-shadow: none;
+    pointer-events: none;
+    line-height: normal;
+}
+
+/* XP Level Star */
+.xp-level-star {
+    position: absolute;
+    right: -27px; /* Half width */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 54px; /* Bigger */
+    height: 54px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+}
+
+.star-shape {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* SVG handles shape */
+}
+
+.level-text {
+    position: relative;
+    z-index: 2;
+    font-weight: 900;
+    color: #fff;
+    font-size: 16px; /* Bigger */
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    font-weight: bold;
 }
 
 /* Result Card */
