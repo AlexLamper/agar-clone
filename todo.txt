@@ -1,10 +1,8 @@
 Later: 
 - different game modes
-- Coin system 
+- Coin system
 - settings
 - Leaderboard
 - Shop
 - Daily quests
-- levels
 - boosts (such as mass boost or xp boost)
-- Clone death screen as accurate as possible.
