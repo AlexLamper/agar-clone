@@ -53,7 +53,9 @@ export class Socket {
 
     sendClaimHourly() {
         if (this.ws.readyState !== WebSocket.OPEN) return;
+        // @ts-ignore
         const msg: ClientMessage = { type: MessageType.CLAIM_HOURLY };
+        // @ts-ignore
         this.send(msg);
     }
 
